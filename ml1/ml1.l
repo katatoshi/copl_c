@@ -11,11 +11,20 @@ int yywrap(void) {
 "+" return ADD;
 "-" return SUB;
 "*" return MUL;
+"<" return LT;
 [0-9]+ {
     int value;
     sscanf(yytext, "%d", &value);
     yylval.int_value = value;
     return INT;
+}
+"false" {
+    yylval.bool_value = false;
+    return BOOL;
+}
+"true" {
+    yylval.bool_value = true;
+    return BOOL;
 }
 "(" return LP;
 ")" return RP;

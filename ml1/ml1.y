@@ -13,8 +13,10 @@ extern int yyerror(const char*);
     bool bool_value;
 }
 %token <int_value> INT
-%token ADD SUB MUL LP RP LF
+%token <bool_value> BOOL
+%token ADD SUB MUL LT LP RP LF
 %type <int_value> exp_int exp_int_mul exp_int_prim val_int
+%type <bool_value> exp_bool exp_bool_prim val_bool
 %%
 lines
     : line {
@@ -30,6 +32,9 @@ line
 exp
     : exp_int {
         printf("%d\n", $1);
+    }
+    | exp_bool {
+        printf("%s\n", $1 ? "true" : "false");
     }
     ;
 exp_int
@@ -61,6 +66,22 @@ val_int
     | SUB INT {
         $$ = -$2;
     }
+    ;
+exp_bool
+    : exp_bool_prim
+    | exp_int LT exp_int {
+        $$ = $1 < $3;
+        printf("%d < %d evalto %s\n", $1, $3, $$ ? "true" : "false");
+    }
+    ;
+exp_bool_prim
+    : val_bool
+    | LP exp_bool RP {
+        $$ = $2;
+    }
+    ;
+val_bool
+    : BOOL
     ;
 %%
 extern char *yytext;
