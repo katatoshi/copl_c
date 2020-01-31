@@ -13,8 +13,8 @@ extern int yyerror(const char*);
     bool bool_value;
 }
 %token <int_value> INT
-%token ADD SUB MUL LF
-%type <int_value> exp_int_2 exp_int_1 val_int
+%token ADD SUB MUL LP RP LF
+%type <int_value> exp_int exp_int_mul exp_int_prim val_int
 %%
 lines
     : line {
@@ -28,26 +28,32 @@ line
     : exp LF
     ;
 exp
-    : exp_int_1 {
+    : exp_int {
         printf("%d\n", $1);
     }
     ;
-exp_int_1
-    : exp_int_2
-    | exp_int_1 ADD exp_int_2 {
+exp_int
+    : exp_int_mul
+    | exp_int ADD exp_int_mul {
         $$ = $1 + $3;
         printf("%d + %d evalto %d\n", $1, $3, $$);
     }
-    | exp_int_1 SUB exp_int_2 {
+    | exp_int SUB exp_int_mul {
         $$ = $1 - $3;
         printf("%d - %d evalto %d\n", $1, $3, $$);
     }
     ;
-exp_int_2
-    : val_int
-    | exp_int_2 MUL val_int {
+exp_int_mul
+    : exp_int_prim
+    | exp_int_mul MUL exp_int_prim {
         $$ = $1 * $3;
         printf("%d * %d evalto %d\n", $1, $3, $$);
+    }
+    ;
+exp_int_prim
+    : val_int
+    | LP exp_int RP {
+        $$ = $2;
     }
     ;
 val_int
@@ -63,7 +69,7 @@ extern FILE *yyin;
 extern int yyparse(void);
 
 int yyerror(const char *str) {
-    fprintf(stderr, "parser error near %s", yytext);
+    fprintf(stderr, "parser error near %s\n", yytext);
     return 0;
 }
 

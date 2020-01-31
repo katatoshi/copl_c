@@ -17,6 +17,8 @@ int yywrap(void) {
     yylval.int_value = value;
     return INT;
 }
+"(" return LP;
+")" return RP;
 [\t ] ;
 "\n" return LF;
 <<EOF>> return 0;
