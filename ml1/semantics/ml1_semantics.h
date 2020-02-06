@@ -2,6 +2,7 @@
 #define ML1_SEMANTICS_H
 
 #include <stdbool.h>
+#include <stdio.h>
 
 typedef enum {
     INT_VALUE,
@@ -54,6 +55,64 @@ struct OpExpTag {
     Exp *exp_right;
 };
 
+typedef struct {
+    Exp *exp;
+    Value *value;
+} Judgement;
+
+typedef struct {
+    Judgement *conclusion;
+} IntDerivation;
+
+typedef struct {
+    Judgement *conclusion;
+} BoolDerivation;
+
+typedef struct OpDerivationTag OpDerivation;
+
+typedef enum {
+    INT_DERIVATION,
+    BOOL_DERIVATION,
+    OP_DERIVATION
+} DerivationType;
+
+typedef struct {
+    DerivationType type;
+    union {
+        IntDerivation *int_derivation;
+        BoolDerivation *bool_derivation;
+        OpDerivation *op_derivation;
+    };
+} Derivation;
+
+typedef enum {
+    PLUS_OP_DERIVATION,
+    MINUS_OP_DERIVATION,
+    TIMES_OP_DERIVATION,
+    LT_OP_DERIVATION,
+} OpDerivationType;
+
+struct OpDerivationTag {
+    OpDerivationType type;
+    Judgement *conclusion;
+    Derivation *premise_left;
+    Derivation *premise_right;
+};
+
+void freeValue(Value *value);
+
 bool evalto(Value *value, const Exp *exp);
+
+bool derive(Derivation *derivation, Exp *exp);
+
+void freeDerivation(Derivation *derivation);
+
+bool fprintExp(FILE *fp, const Exp *exp);
+
+void fprintIndent(FILE *fp, const int level);
+
+bool fprintDerivationImpl(FILE *fp, const Derivation *derivation, const int level);
+
+bool fprintDerivation(FILE *fp, const Derivation *derivation);
 
 #endif // ML1_SEMANTICS_H
