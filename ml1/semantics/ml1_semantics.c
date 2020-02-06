@@ -296,6 +296,7 @@ void free_derivation(Derivation *derivation) {
     switch (derivation->type) {
         case INT_DERIVATION:
             if (derivation->int_derivation == NULL) {
+                free(derivation);
                 return;
             }
 
@@ -304,10 +305,12 @@ void free_derivation(Derivation *derivation) {
                 free(derivation->int_derivation->conclusion);
             }
             free(derivation->int_derivation);
+            free(derivation);
 
             return;
         case BOOL_DERIVATION:
             if (derivation->bool_derivation == NULL) {
+                free(derivation);
                 return;
             }
 
@@ -316,10 +319,12 @@ void free_derivation(Derivation *derivation) {
                 free(derivation->bool_derivation->conclusion);
             }
             free(derivation->bool_derivation);
+            free(derivation);
 
             return;
         case OP_DERIVATION:
             if (derivation->op_derivation == NULL) {
+                free(derivation);
                 return;
             }
 
@@ -330,10 +335,13 @@ void free_derivation(Derivation *derivation) {
             free_derivation(derivation->op_derivation->premise_left);
             free_derivation(derivation->op_derivation->premise_right);
             free(derivation->op_derivation);
+            free(derivation);
 
             return;
-        default:
+        default: {
+            free(derivation);
             return;
+        }
     }
 }
 
