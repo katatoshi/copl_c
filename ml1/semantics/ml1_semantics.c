@@ -3,8 +3,131 @@
 
 #include "ml1_semantics.h"
 
+Value *create_int_value(const int int_value) {
+    Value *value = malloc(sizeof(Value));
+    value->type = INT_VALUE;
+    value->int_value = int_value;
+    return value;
+}
+
+Value *create_bool_value(const bool bool_value) {
+    Value *value = malloc(sizeof(Value));
+    value->type = BOOL_VALUE;
+    value->bool_value = bool_value;
+    return value;
+}
+
 void free_value(Value *value) {
     free(value);
+}
+
+Exp *create_int_exp(const int int_value) {
+    IntExp *int_exp = malloc(sizeof(IntExp));
+    int_exp->int_value = int_value;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = INT_EXP;
+    exp->int_exp = int_exp;
+
+    return exp;
+}
+
+Exp *create_bool_exp(const bool bool_value) {
+    BoolExp *bool_exp = malloc(sizeof(BoolExp));
+    bool_exp->bool_value = bool_value;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = BOOL_EXP;
+    exp->bool_exp = bool_exp;
+
+    return exp;
+}
+
+Exp *create_plus_op_exp(Exp *exp_left, Exp *exp_right) {
+    OpExp *op_exp = malloc(sizeof(OpExp));
+    op_exp->type = PLUS_OP_EXP;
+    op_exp->exp_left = exp_left;
+    op_exp->exp_right = exp_right;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = OP_EXP;
+    exp->op_exp = op_exp;
+
+    return exp;
+}
+
+Exp *create_minus_op_exp(Exp *exp_left, Exp *exp_right) {
+    OpExp *op_exp = malloc(sizeof(OpExp));
+    op_exp->type = MINUS_OP_EXP;
+    op_exp->exp_left = exp_left;
+    op_exp->exp_right = exp_right;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = OP_EXP;
+    exp->op_exp = op_exp;
+
+    return exp;
+}
+
+Exp *create_times_op_exp(Exp *exp_left, Exp *exp_right) {
+    OpExp *op_exp = malloc(sizeof(OpExp));
+    op_exp->type = TIMES_OP_EXP;
+    op_exp->exp_left = exp_left;
+    op_exp->exp_right = exp_right;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = OP_EXP;
+    exp->op_exp = op_exp;
+
+    return exp;
+}
+
+Exp *create_lt_op_exp(Exp *exp_left, Exp *exp_right) {
+    OpExp *op_exp = malloc(sizeof(OpExp));
+    op_exp->type = LT_OP_EXP;
+    op_exp->exp_left = exp_left;
+    op_exp->exp_right = exp_right;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = OP_EXP;
+    exp->op_exp = op_exp;
+
+    return exp;
+}
+
+void free_exp(Exp *exp) {
+    if (exp == NULL) {
+        return;
+    }
+
+    switch (exp->type) {
+        case INT_EXP: {
+            free(exp->int_exp);
+            free(exp);
+            return;
+        }
+        case BOOL_EXP: {
+            free(exp->bool_exp);
+            free(exp);
+            return;
+        }
+        case OP_EXP: {
+            if (exp->op_exp == NULL) {
+                free(exp);
+                return;
+            }
+
+            free_exp(exp->op_exp->exp_left);
+            free_exp(exp->op_exp->exp_right);
+            free(exp->op_exp);
+            free(exp);
+            return;
+        }
+        default: {
+            free(exp);
+            return;
+        }
+    }
 }
 
 bool evalto(Value *value, const Exp *exp) {
@@ -606,98 +729,28 @@ bool fprint_derivation(FILE *fp, const Derivation *derivation) {
 
 int main(void) {
     Value value1;
-    IntExp int_exp1 = { 2 };
-    Exp exp1;
-    exp1.type = INT_EXP;
-    exp1.int_exp = &int_exp1;
-    evalto(&value1, &exp1);
-    printf("%d\n", value1.int_value);
+    Exp *exp1 = create_lt_op_exp(
+        create_int_exp(2),
+        create_times_op_exp(
+            create_plus_op_exp(
+                create_int_exp(3),
+                create_minus_op_exp(
+                    create_int_exp(4),
+                    create_int_exp(5)
+                )
+            ),
+            create_int_exp(6)
+        )
+    );
+    evalto(&value1, exp1);
+    printf("%s\n", value1.bool_value ? "true" : "false");
 
-    Value value2;
-    BoolExp bool_exp2 = { true };
-    Exp exp2;
-    exp2.type = BOOL_EXP;
-    exp2.bool_exp = &bool_exp2;
-    evalto(&value2, &exp2);
-    printf("%s\n", value2.bool_value ? "true" : "false");
+    Derivation *derivation1 = malloc(sizeof(Derivation));
+    derive(derivation1, exp1);
+    fprint_derivation(stdout, derivation1);
 
-    Value value3;
-    IntExp int_exp3 = { 3 };
-    Exp exp3;
-    exp3.type = INT_EXP;
-    exp3.int_exp = &int_exp3;
-    evalto(&value3, &exp3);
-    printf("%d\n", value3.int_value);
-
-    Value value4;
-    OpExp op_exp4;
-    op_exp4.type = PLUS_OP_EXP;
-    op_exp4.exp_left = &exp1;
-    op_exp4.exp_right = &exp3;
-    Exp exp4;
-    exp4.type = OP_EXP;
-    exp4.op_exp = &op_exp4;
-    evalto(&value4, &exp4);
-    printf("%d\n", value4.int_value);
-
-    Value value5;
-    IntExp int_exp5 = { 5 };
-    Exp exp5;
-    exp5.type = INT_EXP;
-    exp5.int_exp = &int_exp5;
-    evalto(&value5, &exp5);
-    printf("%d\n", value5.int_value);
-
-    Value value6;
-    OpExp op_exp6;
-    op_exp6.type = TIMES_OP_EXP;
-    op_exp6.exp_left = &exp4;
-    op_exp6.exp_right = &exp5;
-    Exp exp6;
-    exp6.type = OP_EXP;
-    exp6.op_exp = &op_exp6;
-    evalto(&value6, &exp6);
-    printf("%d\n", value6.int_value);
-
-    Value value7;
-    IntExp int_exp7 = { -2 };
-    Exp exp7;
-    exp7.type = INT_EXP;
-    exp7.int_exp = &int_exp7;
-    evalto(&value7, &exp7);
-    printf("%d\n", value7.int_value);
-
-    Value value8;
-    OpExp op_exp8;
-    op_exp8.type = LT_OP_EXP;
-    op_exp8.exp_left = &exp7;
-    op_exp8.exp_right = &exp6;
-    Exp exp8;
-    exp8.type = OP_EXP;
-    exp8.op_exp = &op_exp8;
-    evalto(&value8, &exp8);
-    printf("%s\n", value8.bool_value ? "true" : "false");
-
-    Value value9;
-    OpExp op_exp9;
-    op_exp9.type = PLUS_OP_EXP;
-    op_exp9.exp_left = &exp1;
-    op_exp9.exp_right = &exp3;
-    Exp exp9;
-    exp9.type = OP_EXP;
-    exp9.op_exp = &op_exp9;
-    evalto(&value9, &exp9);
-    printf("%d\n", value9.int_value);
-
-    Derivation derivation1;
-    derive(&derivation1, &exp6);
-    fprint_derivation(stdout, &derivation1);
-    free_derivation(&derivation1);
-
-    Derivation derivation2;
-    derive(&derivation2, &exp8);
-    fprint_derivation(stdout, &derivation2);
-    free_derivation(&derivation2);
+    free_derivation(derivation1);
+    free_exp(exp1);
 
     return 0;
 }

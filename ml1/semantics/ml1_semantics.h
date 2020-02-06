@@ -99,7 +99,17 @@ struct OpDerivationTag {
     Derivation *premise_right;
 };
 
+Value *create_int_value(const int int_value);
+
+Value *create_bool_value(const bool bool_value);
+
 void free_value(Value *value);
+
+Exp *create_int_exp(const int int_value);
+
+Exp *create_bool_exp(const bool bool_value);
+
+Exp *create_plus_op_exp(Exp *exp_left, Exp *exp_right);
 
 bool evalto(Value *value, const Exp *exp);
 
