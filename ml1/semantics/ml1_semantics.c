@@ -3,7 +3,7 @@
 
 #include "ml1_semantics.h"
 
-void freeValue(Value *value) {
+void free_value(Value *value) {
     free(value);
 }
 
@@ -288,7 +288,7 @@ bool derive(Derivation *derivation, Exp *exp) {
     }
 }
 
-void freeDerivation(Derivation *derivation) {
+void free_derivation(Derivation *derivation) {
     if (derivation == NULL) {
         return;
     }
@@ -300,7 +300,7 @@ void freeDerivation(Derivation *derivation) {
             }
 
             if (derivation->int_derivation->conclusion != NULL) {
-                freeValue(derivation->int_derivation->conclusion->value);
+                free_value(derivation->int_derivation->conclusion->value);
                 free(derivation->int_derivation->conclusion);
             }
             free(derivation->int_derivation);
@@ -312,7 +312,7 @@ void freeDerivation(Derivation *derivation) {
             }
 
             if (derivation->int_derivation->conclusion != NULL) {
-                freeValue(derivation->bool_derivation->conclusion->value);
+                free_value(derivation->bool_derivation->conclusion->value);
                 free(derivation->bool_derivation->conclusion);
             }
             free(derivation->bool_derivation);
@@ -324,11 +324,11 @@ void freeDerivation(Derivation *derivation) {
             }
 
             if (derivation->int_derivation->conclusion != NULL) {
-                freeValue(derivation->op_derivation->conclusion->value);
+                free_value(derivation->op_derivation->conclusion->value);
                 free(derivation->op_derivation->conclusion);
             }
-            freeDerivation(derivation->op_derivation->premise_left);
-            freeDerivation(derivation->op_derivation->premise_right);
+            free_derivation(derivation->op_derivation->premise_left);
+            free_derivation(derivation->op_derivation->premise_right);
             free(derivation->op_derivation);
 
             return;
@@ -337,7 +337,7 @@ void freeDerivation(Derivation *derivation) {
     }
 }
 
-bool fprintExp(FILE *fp, const Exp *exp) {
+bool fprint_exp(FILE *fp, const Exp *exp) {
     switch (exp->type) {
         case INT_EXP: {
             fprintf(fp, "%d", exp->int_exp->int_value);
@@ -351,7 +351,7 @@ bool fprintExp(FILE *fp, const Exp *exp) {
             const Exp *exp_left = exp->op_exp->exp_left;
             const Exp *exp_right = exp->op_exp->exp_right;
             fprintf(fp, "(");
-            if (!fprintExp(fp, exp_left)) {
+            if (!fprint_exp(fp, exp_left)) {
                 return false;
             }
             switch(exp->op_exp->type) {
@@ -375,7 +375,7 @@ bool fprintExp(FILE *fp, const Exp *exp) {
                     return false;
                 }
             }
-            if (!fprintExp(fp, exp_right)) {
+            if (!fprint_exp(fp, exp_right)) {
                 return false;
             }
             fprintf(fp, ")");
@@ -387,18 +387,18 @@ bool fprintExp(FILE *fp, const Exp *exp) {
     return true;
 }
 
-void fprintIndent(FILE *fp, const int level) {
+void fprint_indent(FILE *fp, const int level) {
     for (int i = 0; i < level; i++) {
         fprintf(fp, "  ");
     }
 }
 
-bool fprintDerivationImpl(FILE *fp, const Derivation *derivation, const int level) {
-    fprintIndent(fp, level);
+bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int level) {
+    fprint_indent(fp, level);
     switch (derivation->type) {
         case INT_DERIVATION: {
             const Judgement *conclusion = derivation->int_derivation->conclusion;
-            fprintExp(fp, conclusion->exp);
+            fprint_exp(fp, conclusion->exp);
             fprintf(fp, " evalto %d by E-Int {}", conclusion->value->int_value);
             if (level == 0) {
                 fprintf(fp, "\n");
@@ -407,7 +407,7 @@ bool fprintDerivationImpl(FILE *fp, const Derivation *derivation, const int leve
         }
         case BOOL_DERIVATION: {
             const Judgement *conclusion = derivation->bool_derivation->conclusion;
-            fprintExp(fp, conclusion->exp);
+            fprint_exp(fp, conclusion->exp);
             fprintf(fp, " evalto %d by E-Bool {}", conclusion->value->bool_value);
             if (level == 0) {
                 fprintf(fp, "\n");
@@ -416,7 +416,7 @@ bool fprintDerivationImpl(FILE *fp, const Derivation *derivation, const int leve
         }
         case OP_DERIVATION: {
             const Judgement *conclusion = derivation->op_derivation->conclusion;
-            fprintExp(fp, conclusion->exp);
+            fprint_exp(fp, conclusion->exp);
 
             const Derivation *premise_left = derivation->op_derivation->premise_left;
             const Derivation *premise_right = derivation->op_derivation->premise_right;
@@ -490,21 +490,21 @@ bool fprintDerivationImpl(FILE *fp, const Derivation *derivation, const int leve
             switch (derivation->op_derivation->type) {
                 case PLUS_OP_DERIVATION: {
                     fprintf(fp, " evalto %d by E-Plus {\n", conclusion->value->int_value);
-                    if (!fprintDerivationImpl(fp, premise_left, level + 1)) {
+                    if (!fprint_derivation_impl(fp, premise_left, level + 1)) {
                         return false;
                     }
                     fprintf(fp, ";\n");
-                    if (!fprintDerivationImpl(fp, premise_right, level + 1)) {
+                    if (!fprint_derivation_impl(fp, premise_right, level + 1)) {
                         return false;
                     }
                     fprintf(fp, ";\n");
-                    fprintIndent(fp, level + 1);
+                    fprint_indent(fp, level + 1);
                     fprintf(fp,
                             "%d plus %d is %d by B-Plus {}\n",
                             int_value_left,
                             int_value_right,
                             conclusion->value->int_value);
-                    fprintIndent(fp, level);
+                    fprint_indent(fp, level);
                     fprintf(fp, "}");
                     if (level == 0) {
                         fprintf(fp, "\n");
@@ -513,21 +513,21 @@ bool fprintDerivationImpl(FILE *fp, const Derivation *derivation, const int leve
                 }
                 case MINUS_OP_DERIVATION: {
                     fprintf(fp, " evalto %d by E-Minus {\n", conclusion->value->int_value);
-                    if (!fprintDerivationImpl(fp, premise_left, level + 1)) {
+                    if (!fprint_derivation_impl(fp, premise_left, level + 1)) {
                         return false;
                     }
                     fprintf(fp, ";\n");
-                    if (!fprintDerivationImpl(fp, premise_right, level + 1)) {
+                    if (!fprint_derivation_impl(fp, premise_right, level + 1)) {
                         return false;
                     }
                     fprintf(fp, ";\n");
-                    fprintIndent(fp, level + 1);
+                    fprint_indent(fp, level + 1);
                     fprintf(fp,
                             "%d minus %d is %d by B-Minus {}\n",
                             int_value_left,
                             int_value_right,
                             conclusion->value->int_value);
-                    fprintIndent(fp, level);
+                    fprint_indent(fp, level);
                     fprintf(fp, "}");
                     if (level == 0) {
                         fprintf(fp, "\n");
@@ -536,21 +536,21 @@ bool fprintDerivationImpl(FILE *fp, const Derivation *derivation, const int leve
                 }
                 case TIMES_OP_DERIVATION: {
                     fprintf(fp, " evalto %d by E-Times {\n", conclusion->value->int_value);
-                    if (!fprintDerivationImpl(fp, premise_left, level + 1)) {
+                    if (!fprint_derivation_impl(fp, premise_left, level + 1)) {
                         return false;
                     }
                     fprintf(fp, ";\n");
-                    if (!fprintDerivationImpl(fp, premise_right, level + 1)) {
+                    if (!fprint_derivation_impl(fp, premise_right, level + 1)) {
                         return false;
                     }
                     fprintf(fp, ";\n");
-                    fprintIndent(fp, level + 1);
+                    fprint_indent(fp, level + 1);
                     fprintf(fp,
                             "%d times %d is %d by B-Times {}\n",
                             int_value_left,
                             int_value_right,
                             conclusion->value->int_value);
-                    fprintIndent(fp, level);
+                    fprint_indent(fp, level);
                     fprintf(fp, "}");
                     if (level == 0) {
                         fprintf(fp, "\n");
@@ -561,21 +561,21 @@ bool fprintDerivationImpl(FILE *fp, const Derivation *derivation, const int leve
                     fprintf(fp,
                             " evalto %s by E-Lt {\n",
                             conclusion->value->bool_value ? "true" : "false");
-                    if (!fprintDerivationImpl(fp, premise_left, level + 1)) {
+                    if (!fprint_derivation_impl(fp, premise_left, level + 1)) {
                         return false;
                     }
                     fprintf(fp, ";\n");
-                    if (!fprintDerivationImpl(fp, premise_right, level + 1)) {
+                    if (!fprint_derivation_impl(fp, premise_right, level + 1)) {
                         return false;
                     }
                     fprintf(fp, ";\n");
-                    fprintIndent(fp, level + 1);
+                    fprint_indent(fp, level + 1);
                     fprintf(fp,
                             "%d less than %d is %s by B-Lt {}\n",
                             int_value_left,
                             int_value_right,
                             conclusion->value->bool_value ? "true" : "false");
-                    fprintIndent(fp, level);
+                    fprint_indent(fp, level);
                     fprintf(fp, "}");
                     if (level == 0) {
                         fprintf(fp, "\n");
@@ -592,8 +592,8 @@ bool fprintDerivationImpl(FILE *fp, const Derivation *derivation, const int leve
     }
 }
 
-bool fprintDerivation(FILE *fp, const Derivation *derivation) {
-    return fprintDerivationImpl(fp, derivation, 0);
+bool fprint_derivation(FILE *fp, const Derivation *derivation) {
+    return fprint_derivation_impl(fp, derivation, 0);
 }
 
 int main(void) {
@@ -683,13 +683,13 @@ int main(void) {
 
     Derivation derivation1;
     derive(&derivation1, &exp6);
-    fprintDerivation(stdout, &derivation1);
-    freeDerivation(&derivation1);
+    fprint_derivation(stdout, &derivation1);
+    free_derivation(&derivation1);
 
     Derivation derivation2;
     derive(&derivation2, &exp8);
-    fprintDerivation(stdout, &derivation2);
-    freeDerivation(&derivation2);
+    fprint_derivation(stdout, &derivation2);
+    free_derivation(&derivation2);
 
     return 0;
 }

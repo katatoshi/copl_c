@@ -99,20 +99,20 @@ struct OpDerivationTag {
     Derivation *premise_right;
 };
 
-void freeValue(Value *value);
+void free_value(Value *value);
 
 bool evalto(Value *value, const Exp *exp);
 
 bool derive(Derivation *derivation, Exp *exp);
 
-void freeDerivation(Derivation *derivation);
+void free_derivation(Derivation *derivation);
 
-bool fprintExp(FILE *fp, const Exp *exp);
+bool fprint_exp(FILE *fp, const Exp *exp);
 
-void fprintIndent(FILE *fp, const int level);
+void fprint_indent(FILE *fp, const int level);
 
-bool fprintDerivationImpl(FILE *fp, const Derivation *derivation, const int level);
+bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int level);
 
-bool fprintDerivation(FILE *fp, const Derivation *derivation);
+bool fprint_derivation(FILE *fp, const Derivation *derivation);
 
 #endif // ML1_SEMANTICS_H
