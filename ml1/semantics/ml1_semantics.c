@@ -14,16 +14,28 @@ bool evalto(Value *value, const Exp *exp) {
 
     switch (exp->type) {
         case INT_EXP: {
+            if (exp->int_exp == NULL) {
+                return false;
+            }
+
             value->type = INT_VALUE;
             value->int_value = exp->int_exp->int_value;
             return true;
         }
         case BOOL_EXP: {
+            if (exp->bool_exp == NULL) {
+                return false;
+            }
+
             value->type = BOOL_VALUE;
             value->bool_value = exp->bool_exp->bool_value;
             return true;
         }
         case OP_EXP: {
+            if (exp->op_exp == NULL) {
+                return false;
+            }
+
             const Exp *exp_left = exp->op_exp->exp_left;
             if (exp_left == NULL) {
                 return false;
