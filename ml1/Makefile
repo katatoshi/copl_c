@@ -1,4 +1,4 @@
-ml1 : y.tab.c lex.yy.c
+ml1 : y.tab.o lex.yy.o ml1_semantics.o
 	gcc -o ml1 $^
 
 run_ml1 : ml1

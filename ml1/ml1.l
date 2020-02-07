@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdbool.h>
+#include "ml1_semantics.h"
 #include "y.tab.h"
 
 int yywrap(void) {
@@ -15,15 +16,15 @@ int yywrap(void) {
 [0-9]+ {
     int value;
     sscanf(yytext, "%d", &value);
-    yylval.int_value = value;
+    yylval.exp = create_int_exp(value);
     return INT;
 }
 "false" {
-    yylval.bool_value = false;
+    yylval.exp = create_bool_exp(false);
     return BOOL;
 }
 "true" {
-    yylval.bool_value = true;
+    yylval.exp = create_bool_exp(true);
     return BOOL;
 }
 "(" return LP;

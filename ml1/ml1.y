@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "ml1_semantics.h"
 
 #define YYDEBUG 1
 
@@ -9,14 +10,11 @@ extern int yylex();
 extern int yyerror(const char*);
 %}
 %union {
-    int int_value;
-    bool bool_value;
+    Exp *exp;
 }
-%token <int_value> INT
-%token <bool_value> BOOL
+%token <exp> INT BOOL
 %token ADD SUB MUL LT LP RP LF
-%type <int_value> exp_int exp_int_mul exp_int_prim val_int
-%type <bool_value> exp_bool exp_bool_prim val_bool
+%type <exp> exp_int exp_int_mul exp_int_prim val_int exp_bool exp_bool_prim val_bool
 %%
 lines
     : line {
@@ -31,28 +29,39 @@ line
     ;
 exp
     : exp_int {
-        printf("%d\n", $1);
+        Value *value = evaluate($1);
+        if (value == NULL || value->type != INT_VALUE) {
+            printf("error\n");
+        }
+
+        printf("%d\n", value->int_value);
+        free_value(value);
+        free_exp($1);
     }
     | exp_bool {
-        printf("%s\n", $1 ? "true" : "false");
+        Value *value = evaluate($1);
+        if (value == NULL || value->type != BOOL_VALUE) {
+            printf("error\n");
+        }
+
+        printf("%s\n", value->bool_value ? "true" : "false");
+        free_value(value);
+        free_exp($1);
     }
     ;
 exp_int
     : exp_int_mul
     | exp_int ADD exp_int_mul {
-        $$ = $1 + $3;
-        printf("%d + %d evalto %d\n", $1, $3, $$);
+        $$ = create_plus_op_exp($1, $3);
     }
     | exp_int SUB exp_int_mul {
-        $$ = $1 - $3;
-        printf("%d - %d evalto %d\n", $1, $3, $$);
+        $$ = create_minus_op_exp($1, $3);
     }
     ;
 exp_int_mul
     : exp_int_prim
     | exp_int_mul MUL exp_int_prim {
-        $$ = $1 * $3;
-        printf("%d * %d evalto %d\n", $1, $3, $$);
+        $$ = create_times_op_exp($1, $3);
     }
     ;
 exp_int_prim
@@ -64,14 +73,14 @@ exp_int_prim
 val_int
     : INT
     | SUB INT {
-        $$ = -$2;
+        $$ = create_int_exp(-$2->int_exp->int_value);
+        free_exp($2);
     }
     ;
 exp_bool
     : exp_bool_prim
     | exp_int LT exp_int {
-        $$ = $1 < $3;
-        printf("%d < %d evalto %s\n", $1, $3, $$ ? "true" : "false");
+        $$ = create_lt_op_exp($1, $3);
     }
     ;
 exp_bool_prim
@@ -84,6 +93,7 @@ val_bool
     : BOOL
     ;
 %%
+#include "ml1_semantics.h"
 extern char *yytext;
 extern FILE *yyin;
 
