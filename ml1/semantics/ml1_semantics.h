@@ -56,24 +56,30 @@ struct OpExpTag {
 };
 
 typedef struct {
-    Exp *exp;
-    Value *value;
-} Judgement;
-
-typedef struct {
-    Judgement *conclusion;
+    IntExp *int_exp;
+    int int_value;
 } IntDerivation;
 
 typedef struct {
-    Judgement *conclusion;
+    BoolExp *bool_exp;
+    bool bool_value;
 } BoolDerivation;
 
-typedef struct OpDerivationTag OpDerivation;
+typedef struct PlusOpDerivationTag PlusOpDerivation;
+
+typedef struct MinusOpDerivationTag MinusOpDerivation;
+
+typedef struct TimesOpDerivationTag TimesOpDerivation;
+
+typedef struct LtOpDerivationTag LtOpDerivation;
 
 typedef enum {
     INT_DERIVATION,
     BOOL_DERIVATION,
-    OP_DERIVATION
+    PLUS_OP_DERIVATION,
+    MINUS_OP_DERIVATION,
+    TIMES_OP_DERIVATION,
+    LT_OP_DERIVATION
 } DerivationType;
 
 typedef struct {
@@ -81,22 +87,39 @@ typedef struct {
     union {
         IntDerivation *int_derivation;
         BoolDerivation *bool_derivation;
-        OpDerivation *op_derivation;
+        PlusOpDerivation *plus_op_derivation;
+        MinusOpDerivation *minus_op_derivation;
+        TimesOpDerivation *times_op_derivation;
+        LtOpDerivation *lt_op_derivation;
     };
 } Derivation;
 
-typedef enum {
-    PLUS_OP_DERIVATION,
-    MINUS_OP_DERIVATION,
-    TIMES_OP_DERIVATION,
-    LT_OP_DERIVATION,
-} OpDerivationType;
-
-struct OpDerivationTag {
-    OpDerivationType type;
-    Judgement *conclusion;
+struct PlusOpDerivationTag {
     Derivation *premise_left;
     Derivation *premise_right;
+    OpExp *op_exp;
+    int int_value;
+};
+
+struct MinusOpDerivationTag {
+    Derivation *premise_left;
+    Derivation *premise_right;
+    OpExp *op_exp;
+    int int_value;
+};
+
+struct TimesOpDerivationTag {
+    Derivation *premise_left;
+    Derivation *premise_right;
+    OpExp *op_exp;
+    int int_value;
+};
+
+struct LtOpDerivationTag {
+    Derivation *premise_left;
+    Derivation *premise_right;
+    OpExp *op_exp;
+    bool bool_value;
 };
 
 Value *create_int_value(const int int_value);
@@ -117,7 +140,13 @@ bool derive(Derivation *derivation, Exp *exp);
 
 void free_derivation(Derivation *derivation);
 
-bool fprint_exp(FILE *fp, const Exp *exp);
+bool fprint_exp(FILE *fp, Exp *exp);
+
+bool fprint_int_exp(FILE *fp, IntExp *exp);
+
+bool fprint_bool_exp(FILE *fp, BoolExp *exp);
+
+bool fprint_op_exp(FILE *fp, OpExp *exp);
 
 void fprint_indent(FILE *fp, const int level);
 
