@@ -217,6 +217,49 @@ bool evalto(Value *value, const Exp *exp) {
     }
 }
 
+bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value) {
+    if (derivation == NULL) {
+        return false;
+    }
+
+    switch (derivation->type) {
+        case INT_DERIVATION: {
+            if (derivation->int_derivation == NULL) {
+                return false;
+            }
+
+            *int_value = derivation->int_derivation->int_value;
+            return true;
+        }
+        case PLUS_OP_DERIVATION: {
+            if (derivation->plus_op_derivation == NULL) {
+                return false;
+            }
+
+            *int_value = derivation->plus_op_derivation->int_value;
+            return true;
+        }
+        case MINUS_OP_DERIVATION: {
+            if (derivation->plus_op_derivation == NULL) {
+                return false;
+            }
+
+            *int_value = derivation->plus_op_derivation->int_value;
+            return true;
+        }
+        case TIMES_OP_DERIVATION: {
+            if (derivation->plus_op_derivation == NULL) {
+                return false;
+            }
+
+            *int_value = derivation->plus_op_derivation->int_value;
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
 bool derive(Derivation *derivation, Exp *exp) {
     if (derivation == NULL || exp == NULL) {
         return false;
@@ -270,41 +313,8 @@ bool derive(Derivation *derivation, Exp *exp) {
             }
 
             int int_value_left;
-            switch (premise_left->type) {
-                case INT_DERIVATION: {
-                    if (premise_left->int_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->int_derivation->int_value;
-                    break;
-                }
-                case PLUS_OP_DERIVATION: {
-                    if (premise_left->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->plus_op_derivation->int_value;
-                    break;
-                }
-                case MINUS_OP_DERIVATION: {
-                    if (premise_left->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->plus_op_derivation->int_value;
-                    break;
-                }
-                case TIMES_OP_DERIVATION: {
-                    if (premise_left->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->plus_op_derivation->int_value;
-                    break;
-                }
-                default:
-                    return false;
+            if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
+                return false;
             }
 
             Derivation *premise_right = malloc(sizeof(Derivation));
@@ -313,41 +323,8 @@ bool derive(Derivation *derivation, Exp *exp) {
             }
 
             int int_value_right;
-            switch (premise_right->type) {
-                case INT_DERIVATION: {
-                    if (premise_right->int_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->int_derivation->int_value;
-                    break;
-                }
-                case PLUS_OP_DERIVATION: {
-                    if (premise_right->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->plus_op_derivation->int_value;
-                    break;
-                }
-                case MINUS_OP_DERIVATION: {
-                    if (premise_right->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->plus_op_derivation->int_value;
-                    break;
-                }
-                case TIMES_OP_DERIVATION: {
-                    if (premise_right->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->plus_op_derivation->int_value;
-                    break;
-                }
-                default:
-                    return false;
+            if (!try_get_int_value_from_derivation(premise_right, &int_value_left)) {
+                return false;
             }
 
             switch(exp->op_exp->type) {
@@ -628,83 +605,18 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
-            const Derivation *premise_left = derivation->plus_op_derivation->premise_left;
-            const Derivation *premise_right = derivation->plus_op_derivation->premise_right;
+            Derivation *premise_left = derivation->plus_op_derivation->premise_left;
 
             int int_value_left;
-            switch (premise_left->type) {
-                case INT_DERIVATION: {
-                    if (premise_left->int_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->int_derivation->int_value;
-                    break;
-                }
-                case PLUS_OP_DERIVATION: {
-                    if (premise_left->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->plus_op_derivation->int_value;
-                    break;
-                }
-                case MINUS_OP_DERIVATION: {
-                    if (premise_left->minus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->minus_op_derivation->int_value;
-                    break;
-                }
-                case TIMES_OP_DERIVATION: {
-                    if (premise_left->times_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->times_op_derivation->int_value;
-                    break;
-                }
-                default:
-                    return false;
+            if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
+                return false;
             }
 
+            Derivation *premise_right = derivation->plus_op_derivation->premise_right;
+
             int int_value_right;
-            switch (premise_right->type) {
-                case INT_DERIVATION: {
-                    if (premise_right->int_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->int_derivation->int_value;
-                    break;
-                }
-                case PLUS_OP_DERIVATION: {
-                    if (premise_right->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->plus_op_derivation->int_value;
-                    break;
-                }
-                case MINUS_OP_DERIVATION: {
-                    if (premise_right->minus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->minus_op_derivation->int_value;
-                    break;
-                }
-                case TIMES_OP_DERIVATION: {
-                    if (premise_right->times_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->times_op_derivation->int_value;
-                    break;
-                }
-                default:
-                    return false;
+            if (!try_get_int_value_from_derivation(premise_right, &int_value_right)) {
+                return false;
             }
 
             fprintf(fp, " evalto %d by E-Plus {\n", derivation->plus_op_derivation->int_value);
@@ -738,83 +650,18 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
-            const Derivation *premise_left = derivation->minus_op_derivation->premise_left;
-            const Derivation *premise_right = derivation->minus_op_derivation->premise_right;
+            Derivation *premise_left = derivation->minus_op_derivation->premise_left;
 
             int int_value_left;
-            switch (premise_left->type) {
-                case INT_DERIVATION: {
-                    if (premise_left->int_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->int_derivation->int_value;
-                    break;
-                }
-                case PLUS_OP_DERIVATION: {
-                    if (premise_left->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->plus_op_derivation->int_value;
-                    break;
-                }
-                case MINUS_OP_DERIVATION: {
-                    if (premise_left->minus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->minus_op_derivation->int_value;
-                    break;
-                }
-                case TIMES_OP_DERIVATION: {
-                    if (premise_left->times_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->times_op_derivation->int_value;
-                    break;
-                }
-                default:
-                    return false;
+            if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
+                return false;
             }
 
+            Derivation *premise_right = derivation->minus_op_derivation->premise_right;
+
             int int_value_right;
-            switch (premise_right->type) {
-                case INT_DERIVATION: {
-                    if (premise_right->int_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->int_derivation->int_value;
-                    break;
-                }
-                case PLUS_OP_DERIVATION: {
-                    if (premise_right->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->plus_op_derivation->int_value;
-                    break;
-                }
-                case MINUS_OP_DERIVATION: {
-                    if (premise_right->minus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->minus_op_derivation->int_value;
-                    break;
-                }
-                case TIMES_OP_DERIVATION: {
-                    if (premise_right->times_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->times_op_derivation->int_value;
-                    break;
-                }
-                default:
-                    return false;
+            if (!try_get_int_value_from_derivation(premise_right, &int_value_right)) {
+                return false;
             }
 
             fprintf(fp, " evalto %d by E-Minus {\n", derivation->minus_op_derivation->int_value);
@@ -848,83 +695,18 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
-            const Derivation *premise_left = derivation->times_op_derivation->premise_left;
-            const Derivation *premise_right = derivation->times_op_derivation->premise_right;
+            Derivation *premise_left = derivation->times_op_derivation->premise_left;
 
             int int_value_left;
-            switch (premise_left->type) {
-                case INT_DERIVATION: {
-                    if (premise_left->int_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->int_derivation->int_value;
-                    break;
-                }
-                case PLUS_OP_DERIVATION: {
-                    if (premise_left->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->plus_op_derivation->int_value;
-                    break;
-                }
-                case MINUS_OP_DERIVATION: {
-                    if (premise_left->minus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->minus_op_derivation->int_value;
-                    break;
-                }
-                case TIMES_OP_DERIVATION: {
-                    if (premise_left->times_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->times_op_derivation->int_value;
-                    break;
-                }
-                default:
-                    return false;
+            if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
+                return false;
             }
 
+            Derivation *premise_right = derivation->times_op_derivation->premise_right;
+
             int int_value_right;
-            switch (premise_right->type) {
-                case INT_DERIVATION: {
-                    if (premise_right->int_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->int_derivation->int_value;
-                    break;
-                }
-                case PLUS_OP_DERIVATION: {
-                    if (premise_right->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->plus_op_derivation->int_value;
-                    break;
-                }
-                case MINUS_OP_DERIVATION: {
-                    if (premise_right->minus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->minus_op_derivation->int_value;
-                    break;
-                }
-                case TIMES_OP_DERIVATION: {
-                    if (premise_right->times_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->times_op_derivation->int_value;
-                    break;
-                }
-                default:
-                    return false;
+            if (!try_get_int_value_from_derivation(premise_right, &int_value_right)) {
+                return false;
             }
 
             fprintf(fp, " evalto %d by E-Times {\n", derivation->times_op_derivation->int_value);
@@ -958,83 +740,18 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
-            const Derivation *premise_left = derivation->lt_op_derivation->premise_left;
-            const Derivation *premise_right = derivation->lt_op_derivation->premise_right;
+            Derivation *premise_left = derivation->lt_op_derivation->premise_left;
 
             int int_value_left;
-            switch (premise_left->type) {
-                case INT_DERIVATION: {
-                    if (premise_left->int_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->int_derivation->int_value;
-                    break;
-                }
-                case PLUS_OP_DERIVATION: {
-                    if (premise_left->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->plus_op_derivation->int_value;
-                    break;
-                }
-                case MINUS_OP_DERIVATION: {
-                    if (premise_left->minus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->minus_op_derivation->int_value;
-                    break;
-                }
-                case TIMES_OP_DERIVATION: {
-                    if (premise_left->times_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_left = premise_left->times_op_derivation->int_value;
-                    break;
-                }
-                default:
-                    return false;
+            if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
+                return false;
             }
 
+            Derivation *premise_right = derivation->lt_op_derivation->premise_right;
+
             int int_value_right;
-            switch (premise_right->type) {
-                case INT_DERIVATION: {
-                    if (premise_right->int_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->int_derivation->int_value;
-                    break;
-                }
-                case PLUS_OP_DERIVATION: {
-                    if (premise_right->plus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->plus_op_derivation->int_value;
-                    break;
-                }
-                case MINUS_OP_DERIVATION: {
-                    if (premise_right->minus_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->minus_op_derivation->int_value;
-                    break;
-                }
-                case TIMES_OP_DERIVATION: {
-                    if (premise_right->times_op_derivation == NULL) {
-                        return false;
-                    }
-
-                    int_value_right = premise_right->times_op_derivation->int_value;
-                    break;
-                }
-                default:
-                    return false;
+            if (!try_get_int_value_from_derivation(premise_right, &int_value_right)) {
+                return false;
             }
 
             fprintf(fp, " evalto %s by E-Lt {\n", derivation->lt_op_derivation->bool_value ? "true" : "false");
