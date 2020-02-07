@@ -1,5 +1,7 @@
 lex.yy.c
-ml1
 y.output
 y.tab.c
 y.tab.h
+*.o
+test_ml1_semantics
+ml1

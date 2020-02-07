@@ -134,6 +134,14 @@ Exp *create_bool_exp(const bool bool_value);
 
 Exp *create_plus_op_exp(Exp *exp_left, Exp *exp_right);
 
+Exp *create_minus_op_exp(Exp *exp_left, Exp *exp_right);
+
+Exp *create_times_op_exp(Exp *exp_left, Exp *exp_right);
+
+Exp *create_lt_op_exp(Exp *exp_left, Exp *exp_right);
+
+void free_exp(Exp *exp);
+
 Value *evaluate(const Exp *exp);
 
 Derivation *derive(Exp *exp);
