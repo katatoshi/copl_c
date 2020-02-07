@@ -134,7 +134,7 @@ Exp *create_bool_exp(const bool bool_value);
 
 Exp *create_plus_op_exp(Exp *exp_left, Exp *exp_right);
 
-bool evalto(Value *value, const Exp *exp);
+Value *evaluate(const Exp *exp);
 
 bool derive(Derivation *derivation, Exp *exp);
 

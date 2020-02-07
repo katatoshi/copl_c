@@ -130,90 +130,104 @@ void free_exp(Exp *exp) {
     }
 }
 
-bool evalto(Value *value, const Exp *exp) {
-    if (value == NULL || exp == NULL) {
-        return false;
+Value *evaluate(const Exp *exp) {
+    if (exp == NULL) {
+        return NULL;
     }
 
     switch (exp->type) {
         case INT_EXP: {
             if (exp->int_exp == NULL) {
-                return false;
+                return NULL;
             }
 
+            Value *value = malloc(sizeof(Value));
             value->type = INT_VALUE;
             value->int_value = exp->int_exp->int_value;
-            return true;
+            return value;
         }
         case BOOL_EXP: {
             if (exp->bool_exp == NULL) {
-                return false;
+                return NULL;
             }
 
+            Value *value = malloc(sizeof(Value));
             value->type = BOOL_VALUE;
             value->bool_value = exp->bool_exp->bool_value;
-            return true;
+            return value;
         }
         case OP_EXP: {
             if (exp->op_exp == NULL) {
-                return false;
+                return NULL;
             }
 
             const Exp *exp_left = exp->op_exp->exp_left;
             if (exp_left == NULL) {
-                return false;
+                return NULL;
             }
 
             const Exp *exp_right = exp->op_exp->exp_right;
             if (exp_right == NULL) {
-                return false;
+                return NULL;
             }
 
-            Value value_left;
-            if (!evalto(&value_left, exp_left)) {
-                return false;
+            Value *value_left = evaluate(exp_left);
+            if (value_left == NULL) {
+                return NULL;
             }
 
-            if (value_left.type != INT_VALUE) {
-                return false;
+            if (value_left->type != INT_VALUE) {
+                return NULL;
             }
 
-            Value value_right;
-            if (!evalto(&value_right, exp_right)) {
-                return false;
+            Value *value_right = evaluate(exp_right);
+            if (value_right == NULL) {
+                return NULL;
             }
 
-            if (value_right.type != INT_VALUE) {
-                return false;
+            if (value_right->type != INT_VALUE) {
+                return NULL;
             }
 
             switch(exp->op_exp->type) {
                 case PLUS_OP_EXP: {
+                    Value *value = malloc(sizeof(Value));
                     value->type = INT_VALUE;
-                    value->int_value = value_left.int_value + value_right.int_value;
-                    return true;
+                    value->int_value = value_left->int_value + value_right->int_value;
+                    free_value(value_left);
+                    free_value(value_right);
+                    return value;
                 }
                 case MINUS_OP_EXP: {
+                    Value *value = malloc(sizeof(Value));
                     value->type = INT_VALUE;
-                    value->int_value = value_left.int_value - value_right.int_value;
-                    return true;
+                    value->int_value = value_left->int_value - value_right->int_value;
+                    free_value(value_left);
+                    free_value(value_right);
+                    return value;
                 }
                 case TIMES_OP_EXP: {
+                    Value *value = malloc(sizeof(Value));
                     value->type = INT_VALUE;
-                    value->int_value = value_left.int_value * value_right.int_value;
-                    return true;
+                    value->int_value = value_left->int_value * value_right->int_value;
+                    free_value(value_left);
+                    free_value(value_right);
+                    return value;
                 }
                 case LT_OP_EXP: {
+                    Value *value = malloc(sizeof(Value));
                     value->type = BOOL_VALUE;
-                    value->bool_value = value_left.int_value < value_right.int_value;
-                    return true;
+                    value->bool_value = value_left->int_value < value_right->int_value;
+                    free_value(value_left);
+                    free_value(value_right);
+                    return value;
                 }
                 default:
-                    return false;
+                    return NULL;
             }
         }
         default:
-            return false;
+            return NULL;
     }
 }
 
@@ -786,7 +800,6 @@ bool fprint_derivation(FILE *fp, const Derivation *derivation) {
 }
 
 int main(void) {
-    Value value1;
     Exp *exp1 = create_lt_op_exp(
         create_int_exp(2),
         create_times_op_exp(
@@ -800,8 +813,9 @@ int main(void) {
             create_int_exp(6)
         )
     );
-    evalto(&value1, exp1);
-    printf("%s\n", value1.bool_value ? "true" : "false");
+    Value *value1 = evaluate(exp1);
+    printf("%s\n", value1->bool_value ? "true" : "false");
+    free_value(value1);
 
     Derivation *derivation1 = malloc(sizeof(Derivation));
     derive(derivation1, exp1);
