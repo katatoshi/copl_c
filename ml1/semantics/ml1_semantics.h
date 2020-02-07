@@ -136,7 +136,7 @@ Exp *create_plus_op_exp(Exp *exp_left, Exp *exp_right);
 
 Value *evaluate(const Exp *exp);
 
-bool derive(Derivation *derivation, Exp *exp);
+Derivation *derive(Exp *exp);
 
 void free_derivation(Derivation *derivation);
 

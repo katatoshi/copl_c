@@ -274,71 +274,73 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value) {
     }
 }
 
-bool derive(Derivation *derivation, Exp *exp) {
-    if (derivation == NULL || exp == NULL) {
-        return false;
+Derivation *derive(Exp *exp) {
+    if (exp == NULL) {
+        return NULL;
     }
 
     switch (exp->type) {
         case INT_EXP: {
             if (exp->int_exp == NULL) {
-                return false;
+                return NULL;
             }
 
             IntDerivation *int_derivation = malloc(sizeof(IntDerivation));
             int_derivation->int_exp = exp->int_exp;
             int_derivation->int_value = exp->int_exp->int_value;
 
+            Derivation *derivation = malloc(sizeof(Derivation));
             derivation->type = INT_DERIVATION;
             derivation->int_derivation = int_derivation;
-            return true;
+            return derivation;
         }
         case BOOL_EXP: {
             if (exp->bool_exp == NULL) {
-                return false;
+                return NULL;
             }
 
             BoolDerivation *bool_derivation = malloc(sizeof(BoolDerivation));
             bool_derivation->bool_exp = exp->bool_exp;
             bool_derivation->bool_value = exp->bool_exp->bool_value;
 
+            Derivation *derivation = malloc(sizeof(Derivation));
             derivation->type = BOOL_DERIVATION;
             derivation->bool_derivation = bool_derivation;
-            return true;
+            return derivation;
         }
         case OP_EXP: {
             if (exp->op_exp == NULL) {
-                return false;
+                return NULL;
             }
 
             Exp *exp_left = exp->op_exp->exp_left;
             if (exp_left == NULL) {
-                return false;
+                return NULL;
             }
 
             Exp *exp_right = exp->op_exp->exp_right;
             if (exp_right == NULL) {
-                return false;
+                return NULL;
             }
 
-            Derivation *premise_left = malloc(sizeof(Derivation));
-            if (!derive(premise_left, exp_left)) {
-                return false;
+            Derivation *premise_left = derive(exp_left);
+            if (premise_left == NULL) {
+                return NULL;
             }
 
             int int_value_left;
             if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
-                return false;
+                return NULL;
             }
 
-            Derivation *premise_right = malloc(sizeof(Derivation));
-            if (!derive(premise_right, exp_right)) {
-                return false;
+            Derivation *premise_right = derive(exp_right);
+            if (premise_right == NULL) {
+                return NULL;
             }
 
             int int_value_right;
-            if (!try_get_int_value_from_derivation(premise_right, &int_value_left)) {
-                return false;
+            if (!try_get_int_value_from_derivation(premise_right, &int_value_right)) {
+                return NULL;
             }
 
             switch(exp->op_exp->type) {
@@ -349,31 +351,34 @@ bool derive(Derivation *derivation, Exp *exp) {
                     plus_op_derivation->op_exp = exp->op_exp;
                     plus_op_derivation->int_value = int_value_left + int_value_right;
 
+                    Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = PLUS_OP_DERIVATION;
                     derivation->plus_op_derivation = plus_op_derivation;
-                    return true;
+                    return derivation;
                 }
                 case MINUS_OP_EXP: {
                     MinusOpDerivation *minus_op_derivation = malloc(sizeof(MinusOpDerivation));
                     minus_op_derivation->premise_left = premise_left;
                     minus_op_derivation->premise_right = premise_right;
                     minus_op_derivation->op_exp = exp->op_exp;
-                    minus_op_derivation->int_value = int_value_left + int_value_right;
+                    minus_op_derivation->int_value = int_value_left - int_value_right;
 
+                    Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = MINUS_OP_DERIVATION;
                     derivation->minus_op_derivation = minus_op_derivation;
-                    return true;
+                    return derivation;
                 }
                 case TIMES_OP_EXP: {
                     TimesOpDerivation *times_op_derivation = malloc(sizeof(TimesOpDerivation));
                     times_op_derivation->premise_left = premise_left;
                     times_op_derivation->premise_right = premise_right;
                     times_op_derivation->op_exp = exp->op_exp;
-                    times_op_derivation->int_value = int_value_left + int_value_right;
+                    times_op_derivation->int_value = int_value_left * int_value_right;
 
+                    Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = TIMES_OP_DERIVATION;
                     derivation->times_op_derivation = times_op_derivation;
-                    return true;
+                    return derivation;
                 }
                 case LT_OP_EXP: {
                     LtOpDerivation *lt_op_derivation = malloc(sizeof(LtOpDerivation));
@@ -382,17 +387,18 @@ bool derive(Derivation *derivation, Exp *exp) {
                     lt_op_derivation->op_exp = exp->op_exp;
                     lt_op_derivation->bool_value = int_value_left < int_value_right;
 
+                    Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = LT_OP_DERIVATION;
                     derivation->lt_op_derivation = lt_op_derivation;
-                    return true;
+                    return derivation;
                 }
                 default: {
-                    return false;
+                    return NULL;
                 }
             }
         }
         default:
-            return false;
+            return NULL;
     }
 }
 
@@ -817,10 +823,8 @@ int main(void) {
     printf("%s\n", value1->bool_value ? "true" : "false");
     free_value(value1);
 
-    Derivation *derivation1 = malloc(sizeof(Derivation));
-    derive(derivation1, exp1);
+    Derivation *derivation1 = derive(exp1);
     fprint_derivation(stdout, derivation1);
-
     free_derivation(derivation1);
     free_exp(exp1);
 
