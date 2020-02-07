@@ -9,9 +9,9 @@ int yywrap(void) {
 }
 %}
 %%
-"+" return ADD;
-"-" return SUB;
-"*" return MUL;
+"+" return PLUS;
+"-" return MINUS;
+"*" return TIMES;
 "<" return LT;
 [0-9]+ {
     int value;
@@ -31,5 +31,6 @@ int yywrap(void) {
 ")" return RP;
 [\t ] ;
 "\n" return LF;
-<<EOF>> return 0;
+<<EOF>> return END_OF_FILE;
+. return yytext[0];
 %%

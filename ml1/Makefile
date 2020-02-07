@@ -1,5 +1,5 @@
-ml1 : y.tab.o lex.yy.o ml1_semantics.o
-	gcc -o ml1 $^
+ml1 :ml1_semantics.o y.tab.o lex.yy.o main.o
+	gcc -o $@ $^
 
 run_ml1 : ml1
 	./ml1
@@ -20,6 +20,12 @@ run_test_ml1_semantics : test_ml1_semantics
 	gcc -c $<
 
 ml1_semantics.o : ml1_semantics.h
+
+y.tab.o : ml1_semantics.h
+
+lex.yy.o : ml1_semantics.h y.tab.h
+
+main.o : ml1_semantics.h y.tab.h
 
 clean :
 	rm -f ./ml1
