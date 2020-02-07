@@ -785,7 +785,7 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             fprintf(fp, ";\n");
             fprint_indent(fp, level + 1);
             fprintf(fp,
-                    "%d lt %d is %s by B-Lt {}\n",
+                    "%d less than %d is %s by B-Lt {}\n",
                     int_value_left,
                     int_value_right,
                     derivation->lt_op_derivation->bool_value ? "true" : "false");
