@@ -10,7 +10,7 @@ extern int yylex();
 
 extern int yyerror(const char*);
 
-Exp *exp_to_be_evaluated;
+Exp *parsed_exp;
 %}
 %union {
     Exp *exp;
@@ -21,17 +21,17 @@ Exp *exp_to_be_evaluated;
 %%
 line
     : exp LF {
-        if (exp_to_be_evaluated != NULL) {
-            free_exp(exp_to_be_evaluated);
+        if (parsed_exp != NULL) {
+            free_exp(parsed_exp);
         }
-        exp_to_be_evaluated = $1;
+        parsed_exp = $1;
         return 0;
     }
     | END_OF_FILE {
-        if (exp_to_be_evaluated != NULL) {
-            free_exp(exp_to_be_evaluated);
+        if (parsed_exp != NULL) {
+            free_exp(parsed_exp);
         }
-        exp_to_be_evaluated = NULL;
+        parsed_exp = NULL;
         return 0;
     }
     ;

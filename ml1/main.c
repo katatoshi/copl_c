@@ -8,7 +8,7 @@ extern FILE *yyin;
 
 extern int yyparse(void);
 
-extern Exp *exp_to_be_evaluated;
+extern Exp *parsed_exp;
 
 typedef enum {
     OUTPUT_VALUE,
@@ -38,14 +38,14 @@ int main(int argc, char *argv[]) {
 
     printf("> ");
     while (yyparse() == 0) {
-        if (exp_to_be_evaluated == NULL) {
+        if (parsed_exp == NULL) {
             printf("\n");
             return 0;
         }
 
         switch (output_type) {
             case OUTPUT_VALUE: {
-                Value *value = evaluate(exp_to_be_evaluated);
+                Value *value = evaluate(parsed_exp);
                 switch (value->type) {
                     case INT_VALUE: {
                         printf("%d\n", value->int_value);
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
                     }
                     default: {
                         free_value(value);
-                        free_exp(exp_to_be_evaluated);
+                        free_exp(parsed_exp);
                         return 0;
                     }
                 }
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case OUTPUT_DERIVATION: {
-                Derivation *derivation = derive(exp_to_be_evaluated);
+                Derivation *derivation = derive(parsed_exp);
                 fprint_derivation(stdout, derivation);
                 break;
             }
@@ -73,8 +73,8 @@ int main(int argc, char *argv[]) {
                 break;
             }
         }
-        free_exp(exp_to_be_evaluated);
-        exp_to_be_evaluated = NULL;
+        free_exp(parsed_exp);
+        parsed_exp = NULL;
         printf("> ");
     }
 
