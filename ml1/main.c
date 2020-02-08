@@ -10,6 +10,8 @@ extern int yyparse(void);
 
 extern Exp *parsed_exp;
 
+extern bool is_eof;
+
 typedef enum {
     OUTPUT_VALUE,
     OUTPUT_DERIVATION
@@ -39,8 +41,13 @@ int main(int argc, char *argv[]) {
     printf("> ");
     while (yyparse() == 0) {
         if (parsed_exp == NULL) {
-            printf("\n");
-            return 0;
+            if (is_eof) {
+                printf("\n");
+                return 0;
+            }
+
+            printf("> ");
+            continue;
         }
 
         switch (output_type) {

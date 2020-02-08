@@ -11,6 +11,8 @@ extern int yylex();
 extern int yyerror(const char*);
 
 Exp *parsed_exp;
+
+bool is_eof;
 %}
 %union {
     Exp *exp;
@@ -21,13 +23,23 @@ Exp *parsed_exp;
 %%
 line
     : exp LF {
+        is_eof = false;
         if (parsed_exp != NULL) {
             free_exp(parsed_exp);
         }
         parsed_exp = $1;
         return 0;
     }
+    | LF {
+        is_eof = false;
+        if (parsed_exp != NULL) {
+            free_exp(parsed_exp);
+        }
+        parsed_exp = NULL;
+        return 0;
+    }
     | END_OF_FILE {
+        is_eof = true;
         if (parsed_exp != NULL) {
             free_exp(parsed_exp);
         }
