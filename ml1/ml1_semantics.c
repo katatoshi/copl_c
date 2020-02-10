@@ -254,19 +254,19 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value) {
             return true;
         }
         case MINUS_OP_DERIVATION: {
-            if (derivation->plus_op_derivation == NULL) {
+            if (derivation->minus_op_derivation == NULL) {
                 return false;
             }
 
-            *int_value = derivation->plus_op_derivation->int_value;
+            *int_value = derivation->minus_op_derivation->int_value;
             return true;
         }
         case TIMES_OP_DERIVATION: {
-            if (derivation->plus_op_derivation == NULL) {
+            if (derivation->times_op_derivation == NULL) {
                 return false;
             }
 
-            *int_value = derivation->plus_op_derivation->int_value;
+            *int_value = derivation->times_op_derivation->int_value;
             return true;
         }
         default:
