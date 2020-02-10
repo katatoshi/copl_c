@@ -65,21 +65,21 @@ typedef struct {
     bool bool_value;
 } BoolDerivation;
 
-typedef struct PlusOpDerivationTag PlusOpDerivation;
+typedef struct PlusDerivationTag PlusDerivation;
 
-typedef struct MinusOpDerivationTag MinusOpDerivation;
+typedef struct MinusDerivationTag MinusDerivation;
 
-typedef struct TimesOpDerivationTag TimesOpDerivation;
+typedef struct TimesDerivationTag TimesDerivation;
 
-typedef struct LtOpDerivationTag LtOpDerivation;
+typedef struct LtDerivationTag LtDerivation;
 
 typedef enum {
     INT_DERIVATION,
     BOOL_DERIVATION,
-    PLUS_OP_DERIVATION,
-    MINUS_OP_DERIVATION,
-    TIMES_OP_DERIVATION,
-    LT_OP_DERIVATION
+    PLUS_DERIVATION,
+    MINUS_DERIVATION,
+    TIMES_DERIVATION,
+    LT_DERIVATION
 } DerivationType;
 
 typedef struct {
@@ -87,35 +87,35 @@ typedef struct {
     union {
         IntDerivation *int_derivation;
         BoolDerivation *bool_derivation;
-        PlusOpDerivation *plus_op_derivation;
-        MinusOpDerivation *minus_op_derivation;
-        TimesOpDerivation *times_op_derivation;
-        LtOpDerivation *lt_op_derivation;
+        PlusDerivation *plus_derivation;
+        MinusDerivation *minus_derivation;
+        TimesDerivation *times_derivation;
+        LtDerivation *lt_derivation;
     };
 } Derivation;
 
-struct PlusOpDerivationTag {
+struct PlusDerivationTag {
     Derivation *premise_left;
     Derivation *premise_right;
     OpExp *op_exp;
     int int_value;
 };
 
-struct MinusOpDerivationTag {
+struct MinusDerivationTag {
     Derivation *premise_left;
     Derivation *premise_right;
     OpExp *op_exp;
     int int_value;
 };
 
-struct TimesOpDerivationTag {
+struct TimesDerivationTag {
     Derivation *premise_left;
     Derivation *premise_right;
     OpExp *op_exp;
     int int_value;
 };
 
-struct LtOpDerivationTag {
+struct LtDerivationTag {
     Derivation *premise_left;
     Derivation *premise_right;
     OpExp *op_exp;

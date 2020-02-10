@@ -245,28 +245,28 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value) {
             *int_value = derivation->int_derivation->int_value;
             return true;
         }
-        case PLUS_OP_DERIVATION: {
-            if (derivation->plus_op_derivation == NULL) {
+        case PLUS_DERIVATION: {
+            if (derivation->plus_derivation == NULL) {
                 return false;
             }
 
-            *int_value = derivation->plus_op_derivation->int_value;
+            *int_value = derivation->plus_derivation->int_value;
             return true;
         }
-        case MINUS_OP_DERIVATION: {
-            if (derivation->minus_op_derivation == NULL) {
+        case MINUS_DERIVATION: {
+            if (derivation->minus_derivation == NULL) {
                 return false;
             }
 
-            *int_value = derivation->minus_op_derivation->int_value;
+            *int_value = derivation->minus_derivation->int_value;
             return true;
         }
-        case TIMES_OP_DERIVATION: {
-            if (derivation->times_op_derivation == NULL) {
+        case TIMES_DERIVATION: {
+            if (derivation->times_derivation == NULL) {
                 return false;
             }
 
-            *int_value = derivation->times_op_derivation->int_value;
+            *int_value = derivation->times_derivation->int_value;
             return true;
         }
         default:
@@ -345,51 +345,51 @@ Derivation *derive(Exp *exp) {
 
             switch(exp->op_exp->type) {
                 case PLUS_OP_EXP: {
-                    PlusOpDerivation *plus_op_derivation = malloc(sizeof(PlusOpDerivation));
-                    plus_op_derivation->premise_left = premise_left;
-                    plus_op_derivation->premise_right = premise_right;
-                    plus_op_derivation->op_exp = exp->op_exp;
-                    plus_op_derivation->int_value = int_value_left + int_value_right;
+                    PlusDerivation *plus_derivation = malloc(sizeof(PlusDerivation));
+                    plus_derivation->premise_left = premise_left;
+                    plus_derivation->premise_right = premise_right;
+                    plus_derivation->op_exp = exp->op_exp;
+                    plus_derivation->int_value = int_value_left + int_value_right;
 
                     Derivation *derivation = malloc(sizeof(Derivation));
-                    derivation->type = PLUS_OP_DERIVATION;
-                    derivation->plus_op_derivation = plus_op_derivation;
+                    derivation->type = PLUS_DERIVATION;
+                    derivation->plus_derivation = plus_derivation;
                     return derivation;
                 }
                 case MINUS_OP_EXP: {
-                    MinusOpDerivation *minus_op_derivation = malloc(sizeof(MinusOpDerivation));
-                    minus_op_derivation->premise_left = premise_left;
-                    minus_op_derivation->premise_right = premise_right;
-                    minus_op_derivation->op_exp = exp->op_exp;
-                    minus_op_derivation->int_value = int_value_left - int_value_right;
+                    MinusDerivation *minus_derivation = malloc(sizeof(MinusDerivation));
+                    minus_derivation->premise_left = premise_left;
+                    minus_derivation->premise_right = premise_right;
+                    minus_derivation->op_exp = exp->op_exp;
+                    minus_derivation->int_value = int_value_left - int_value_right;
 
                     Derivation *derivation = malloc(sizeof(Derivation));
-                    derivation->type = MINUS_OP_DERIVATION;
-                    derivation->minus_op_derivation = minus_op_derivation;
+                    derivation->type = MINUS_DERIVATION;
+                    derivation->minus_derivation = minus_derivation;
                     return derivation;
                 }
                 case TIMES_OP_EXP: {
-                    TimesOpDerivation *times_op_derivation = malloc(sizeof(TimesOpDerivation));
-                    times_op_derivation->premise_left = premise_left;
-                    times_op_derivation->premise_right = premise_right;
-                    times_op_derivation->op_exp = exp->op_exp;
-                    times_op_derivation->int_value = int_value_left * int_value_right;
+                    TimesDerivation *times_derivation = malloc(sizeof(TimesDerivation));
+                    times_derivation->premise_left = premise_left;
+                    times_derivation->premise_right = premise_right;
+                    times_derivation->op_exp = exp->op_exp;
+                    times_derivation->int_value = int_value_left * int_value_right;
 
                     Derivation *derivation = malloc(sizeof(Derivation));
-                    derivation->type = TIMES_OP_DERIVATION;
-                    derivation->times_op_derivation = times_op_derivation;
+                    derivation->type = TIMES_DERIVATION;
+                    derivation->times_derivation = times_derivation;
                     return derivation;
                 }
                 case LT_OP_EXP: {
-                    LtOpDerivation *lt_op_derivation = malloc(sizeof(LtOpDerivation));
-                    lt_op_derivation->premise_left = premise_left;
-                    lt_op_derivation->premise_right = premise_right;
-                    lt_op_derivation->op_exp = exp->op_exp;
-                    lt_op_derivation->bool_value = int_value_left < int_value_right;
+                    LtDerivation *lt_derivation = malloc(sizeof(LtDerivation));
+                    lt_derivation->premise_left = premise_left;
+                    lt_derivation->premise_right = premise_right;
+                    lt_derivation->op_exp = exp->op_exp;
+                    lt_derivation->bool_value = int_value_left < int_value_right;
 
                     Derivation *derivation = malloc(sizeof(Derivation));
-                    derivation->type = LT_OP_DERIVATION;
-                    derivation->lt_op_derivation = lt_op_derivation;
+                    derivation->type = LT_DERIVATION;
+                    derivation->lt_derivation = lt_derivation;
                     return derivation;
                 }
                 default: {
@@ -418,51 +418,51 @@ void free_derivation(Derivation *derivation) {
             free(derivation);
             return;
         }
-        case PLUS_OP_DERIVATION: {
-            if (derivation->plus_op_derivation == NULL) {
+        case PLUS_DERIVATION: {
+            if (derivation->plus_derivation == NULL) {
                 free(derivation);
                 return;
             }
 
-            free_derivation(derivation->plus_op_derivation->premise_left);
-            free_derivation(derivation->plus_op_derivation->premise_right);
-            free(derivation->plus_op_derivation);
+            free_derivation(derivation->plus_derivation->premise_left);
+            free_derivation(derivation->plus_derivation->premise_right);
+            free(derivation->plus_derivation);
             free(derivation);
             return;
         }
-        case MINUS_OP_DERIVATION: {
-            if (derivation->minus_op_derivation == NULL) {
+        case MINUS_DERIVATION: {
+            if (derivation->minus_derivation == NULL) {
                 free(derivation);
                 return;
             }
 
-            free_derivation(derivation->minus_op_derivation->premise_left);
-            free_derivation(derivation->minus_op_derivation->premise_right);
-            free(derivation->minus_op_derivation);
+            free_derivation(derivation->minus_derivation->premise_left);
+            free_derivation(derivation->minus_derivation->premise_right);
+            free(derivation->minus_derivation);
             free(derivation);
             return;
         }
-        case TIMES_OP_DERIVATION: {
-            if (derivation->times_op_derivation == NULL) {
+        case TIMES_DERIVATION: {
+            if (derivation->times_derivation == NULL) {
                 free(derivation);
                 return;
             }
 
-            free_derivation(derivation->times_op_derivation->premise_left);
-            free_derivation(derivation->times_op_derivation->premise_right);
-            free(derivation->times_op_derivation);
+            free_derivation(derivation->times_derivation->premise_left);
+            free_derivation(derivation->times_derivation->premise_right);
+            free(derivation->times_derivation);
             free(derivation);
             return;
         }
-        case LT_OP_DERIVATION: {
-            if (derivation->lt_op_derivation == NULL) {
+        case LT_DERIVATION: {
+            if (derivation->lt_derivation == NULL) {
                 free(derivation);
                 return;
             }
 
-            free_derivation(derivation->lt_op_derivation->premise_left);
-            free_derivation(derivation->lt_op_derivation->premise_right);
-            free(derivation->lt_op_derivation);
+            free_derivation(derivation->lt_derivation->premise_left);
+            free_derivation(derivation->lt_derivation->premise_right);
+            free(derivation->lt_derivation);
             free(derivation);
             return;
         }
@@ -616,30 +616,30 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             }
             return true;
         }
-        case PLUS_OP_DERIVATION: {
-            if (derivation->plus_op_derivation == NULL) {
+        case PLUS_DERIVATION: {
+            if (derivation->plus_derivation == NULL) {
                 return false;
             }
 
-            if (!fprint_op_exp(fp, derivation->plus_op_derivation->op_exp)) {
+            if (!fprint_op_exp(fp, derivation->plus_derivation->op_exp)) {
                 return false;
             }
 
-            Derivation *premise_left = derivation->plus_op_derivation->premise_left;
+            Derivation *premise_left = derivation->plus_derivation->premise_left;
 
             int int_value_left;
             if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
                 return false;
             }
 
-            Derivation *premise_right = derivation->plus_op_derivation->premise_right;
+            Derivation *premise_right = derivation->plus_derivation->premise_right;
 
             int int_value_right;
             if (!try_get_int_value_from_derivation(premise_right, &int_value_right)) {
                 return false;
             }
 
-            fprintf(fp, " evalto %d by E-Plus {\n", derivation->plus_op_derivation->int_value);
+            fprintf(fp, " evalto %d by E-Plus {\n", derivation->plus_derivation->int_value);
             if (!fprint_derivation_impl(fp, premise_left, level + 1)) {
                 return false;
             }
@@ -653,7 +653,7 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                     "%d plus %d is %d by B-Plus {}\n",
                     int_value_left,
                     int_value_right,
-                    derivation->plus_op_derivation->int_value);
+                    derivation->plus_derivation->int_value);
             fprint_indent(fp, level);
             fprintf(fp, "}");
             if (level == 0) {
@@ -661,30 +661,30 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             }
             return true;
         }
-        case MINUS_OP_DERIVATION: {
-            if (derivation->minus_op_derivation == NULL) {
+        case MINUS_DERIVATION: {
+            if (derivation->minus_derivation == NULL) {
                 return false;
             }
 
-            if (!fprint_op_exp(fp, derivation->minus_op_derivation->op_exp)) {
+            if (!fprint_op_exp(fp, derivation->minus_derivation->op_exp)) {
                 return false;
             }
 
-            Derivation *premise_left = derivation->minus_op_derivation->premise_left;
+            Derivation *premise_left = derivation->minus_derivation->premise_left;
 
             int int_value_left;
             if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
                 return false;
             }
 
-            Derivation *premise_right = derivation->minus_op_derivation->premise_right;
+            Derivation *premise_right = derivation->minus_derivation->premise_right;
 
             int int_value_right;
             if (!try_get_int_value_from_derivation(premise_right, &int_value_right)) {
                 return false;
             }
 
-            fprintf(fp, " evalto %d by E-Minus {\n", derivation->minus_op_derivation->int_value);
+            fprintf(fp, " evalto %d by E-Minus {\n", derivation->minus_derivation->int_value);
             if (!fprint_derivation_impl(fp, premise_left, level + 1)) {
                 return false;
             }
@@ -698,7 +698,7 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                     "%d minus %d is %d by B-Minus {}\n",
                     int_value_left,
                     int_value_right,
-                    derivation->minus_op_derivation->int_value);
+                    derivation->minus_derivation->int_value);
             fprint_indent(fp, level);
             fprintf(fp, "}");
             if (level == 0) {
@@ -706,30 +706,30 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             }
             return true;
         }
-        case TIMES_OP_DERIVATION: {
-            if (derivation->times_op_derivation == NULL) {
+        case TIMES_DERIVATION: {
+            if (derivation->times_derivation == NULL) {
                 return false;
             }
 
-            if (!fprint_op_exp(fp, derivation->times_op_derivation->op_exp)) {
+            if (!fprint_op_exp(fp, derivation->times_derivation->op_exp)) {
                 return false;
             }
 
-            Derivation *premise_left = derivation->times_op_derivation->premise_left;
+            Derivation *premise_left = derivation->times_derivation->premise_left;
 
             int int_value_left;
             if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
                 return false;
             }
 
-            Derivation *premise_right = derivation->times_op_derivation->premise_right;
+            Derivation *premise_right = derivation->times_derivation->premise_right;
 
             int int_value_right;
             if (!try_get_int_value_from_derivation(premise_right, &int_value_right)) {
                 return false;
             }
 
-            fprintf(fp, " evalto %d by E-Times {\n", derivation->times_op_derivation->int_value);
+            fprintf(fp, " evalto %d by E-Times {\n", derivation->times_derivation->int_value);
             if (!fprint_derivation_impl(fp, premise_left, level + 1)) {
                 return false;
             }
@@ -743,7 +743,7 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                     "%d times %d is %d by B-Times {}\n",
                     int_value_left,
                     int_value_right,
-                    derivation->times_op_derivation->int_value);
+                    derivation->times_derivation->int_value);
             fprint_indent(fp, level);
             fprintf(fp, "}");
             if (level == 0) {
@@ -751,30 +751,30 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             }
             return true;
         }
-        case LT_OP_DERIVATION: {
-            if (derivation->lt_op_derivation == NULL) {
+        case LT_DERIVATION: {
+            if (derivation->lt_derivation == NULL) {
                 return false;
             }
 
-            if (!fprint_op_exp(fp, derivation->lt_op_derivation->op_exp)) {
+            if (!fprint_op_exp(fp, derivation->lt_derivation->op_exp)) {
                 return false;
             }
 
-            Derivation *premise_left = derivation->lt_op_derivation->premise_left;
+            Derivation *premise_left = derivation->lt_derivation->premise_left;
 
             int int_value_left;
             if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
                 return false;
             }
 
-            Derivation *premise_right = derivation->lt_op_derivation->premise_right;
+            Derivation *premise_right = derivation->lt_derivation->premise_right;
 
             int int_value_right;
             if (!try_get_int_value_from_derivation(premise_right, &int_value_right)) {
                 return false;
             }
 
-            fprintf(fp, " evalto %s by E-Lt {\n", derivation->lt_op_derivation->bool_value ? "true" : "false");
+            fprintf(fp, " evalto %s by E-Lt {\n", derivation->lt_derivation->bool_value ? "true" : "false");
             if (!fprint_derivation_impl(fp, premise_left, level + 1)) {
                 return false;
             }
@@ -788,7 +788,7 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                     "%d less than %d is %s by B-Lt {}\n",
                     int_value_left,
                     int_value_right,
-                    derivation->lt_op_derivation->bool_value ? "true" : "false");
+                    derivation->lt_derivation->bool_value ? "true" : "false");
             fprint_indent(fp, level);
             fprintf(fp, "}");
             if (level == 0) {
