@@ -19,7 +19,7 @@ bool is_eof;
 }
 %token <exp> INT BOOL
 %token PLUS MINUS TIMES LT LP RP LF QUIT END_OF_FILE
-%type <exp> exp int_exp times_exp plus_exp bool_exp lt_exp
+%type <exp> exp exp_plus exp_times exp_primary
 %%
 line
     : exp LF {
@@ -48,43 +48,34 @@ line
     }
     ;
 exp
-    : plus_exp
-    | lt_exp
+    : exp_plus
+    | exp LT exp_plus {
+        $$ = create_lt_op_exp($1, $3);
+    }
     ;
-plus_exp
-    : times_exp
-    | plus_exp PLUS times_exp {
+exp_plus
+    : exp_times
+    | exp_plus PLUS exp_times {
         $$ = create_plus_op_exp($1, $3);
     }
-    | plus_exp MINUS times_exp {
+    | exp_plus MINUS exp_times {
         $$ = create_minus_op_exp($1, $3);
     }
     ;
-times_exp
-    : int_exp
-    | times_exp TIMES int_exp {
+exp_times
+    : exp_primary
+    | exp_times TIMES exp_primary {
         $$ = create_times_op_exp($1, $3);
     }
     ;
-int_exp
+exp_primary
     : INT
+    | BOOL
     | MINUS INT {
         $$ = create_int_exp(-$2->int_exp->int_value);
         free_exp($2);
     }
-    | LP plus_exp RP {
-        $$ = $2;
-    }
-    ;
-lt_exp
-    : bool_exp
-    | plus_exp LT plus_exp {
-        $$ = create_lt_op_exp($1, $3);
-    }
-    ;
-bool_exp
-    : BOOL
-    | LP lt_exp RP {
+    | LP exp RP {
         $$ = $2;
     }
     ;

@@ -53,6 +53,14 @@ int main(int argc, char *argv[]) {
         switch (output_type) {
             case OUTPUT_VALUE: {
                 Value *value = evaluate(parsed_exp);
+                if (value == NULL) {
+                    printf("evaluation failed\n");
+                    free_exp(parsed_exp);
+                    parsed_exp = NULL;
+                    printf("> ");
+                    continue;
+                }
+
                 switch (value->type) {
                     case INT_VALUE: {
                         printf("%d\n", value->int_value);
@@ -73,7 +81,16 @@ int main(int argc, char *argv[]) {
             }
             case OUTPUT_DERIVATION: {
                 Derivation *derivation = derive(parsed_exp);
+                if (derivation == NULL) {
+                    printf("derivation failed\n");
+                    free_exp(parsed_exp);
+                    parsed_exp = NULL;
+                    printf("> ");
+                    continue;
+                }
+
                 fprint_derivation(stdout, derivation);
+                free_derivation(derivation);
                 break;
             }
             default: {
