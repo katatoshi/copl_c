@@ -351,8 +351,216 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value) {
             *int_value = derivation->times_derivation->int_value;
             return true;
         }
+        case IF_TRUE_DERIVATION: {
+            if (derivation->if_true_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->if_true_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != INT_VALUE) {
+                return false;
+            }
+
+            *int_value = value->int_value;
+            return true;
+        }
+        case IF_FALSE_DERIVATION: {
+            if (derivation->if_false_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->if_false_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != INT_VALUE) {
+                return false;
+            }
+
+            *int_value = value->int_value;
+            return true;
+        }
         default:
             return false;
+    }
+}
+
+bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value) {
+    if (derivation == NULL) {
+        return false;
+    }
+
+    switch (derivation->type) {
+        case BOOL_DERIVATION: {
+            if (derivation->bool_derivation == NULL) {
+                return false;
+            }
+
+            *bool_value = derivation->bool_derivation->bool_value;
+            return true;
+        }
+        case LT_DERIVATION: {
+            if (derivation->lt_derivation == NULL) {
+                return false;
+            }
+
+            *bool_value = derivation->lt_derivation->bool_value;
+            return true;
+        }
+        case IF_TRUE_DERIVATION: {
+            if (derivation->if_true_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->if_true_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != BOOL_VALUE) {
+                return false;
+            }
+
+            *bool_value = value->bool_value;
+            return true;
+        }
+        case IF_FALSE_DERIVATION: {
+            if (derivation->if_false_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->if_false_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != BOOL_VALUE) {
+                return false;
+            }
+
+            *bool_value = value->bool_value;
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
+Value *create_value_from_derivation(Derivation *derivation) {
+    if (derivation == NULL) {
+        return NULL;
+    }
+
+    switch (derivation->type) {
+        case INT_DERIVATION: {
+            if (derivation->int_derivation == NULL) {
+                return NULL;
+            }
+
+            Value *value = malloc(sizeof(Value));
+            value->type = INT_VALUE;
+            value->int_value = derivation->int_derivation->int_value;
+            return value;
+        }
+        case BOOL_DERIVATION: {
+            if (derivation->bool_derivation == NULL) {
+                return NULL;
+            }
+
+            Value *value = malloc(sizeof(Value));
+            value->type = BOOL_VALUE;
+            value->bool_value = derivation->bool_derivation->bool_value;
+            return value;
+        }
+        case PLUS_DERIVATION: {
+            if (derivation->plus_derivation == NULL) {
+                return NULL;
+            }
+
+            Value *value = malloc(sizeof(Value));
+            value->type = INT_VALUE;
+            value->int_value = derivation->plus_derivation->int_value;
+            return value;
+        }
+        case MINUS_DERIVATION: {
+            if (derivation->minus_derivation == NULL) {
+                return NULL;
+            }
+
+            Value *value = malloc(sizeof(Value));
+            value->type = INT_VALUE;
+            value->int_value = derivation->minus_derivation->int_value;
+            return value;
+        }
+        case TIMES_DERIVATION: {
+            if (derivation->times_derivation == NULL) {
+                return NULL;
+            }
+
+            Value *value = malloc(sizeof(Value));
+            value->type = INT_VALUE;
+            value->int_value = derivation->times_derivation->int_value;
+            return value;
+        }
+        case IF_TRUE_DERIVATION: {
+            if (derivation->if_true_derivation == NULL) {
+                return false;
+            }
+
+            Value *value_src = derivation->if_true_derivation->value;
+            if (value_src == NULL) {
+                return false;
+            }
+
+            Value *value = malloc(sizeof(Value));
+            value->type = value_src->type;
+            switch (value_src->type) {
+                case INT_VALUE: {
+                    value->int_value = value_src->int_value;
+                    break;
+                }
+                case BOOL_VALUE: {
+                    value->bool_value = value_src->bool_value;
+                    break;
+                }
+                default:
+                    return NULL;
+            }
+            return value;
+        }
+        case IF_FALSE_DERIVATION: {
+            if (derivation->if_false_derivation == NULL) {
+                return false;
+            }
+
+            Value *value_src = derivation->if_false_derivation->value;
+            if (value_src == NULL) {
+                return false;
+            }
+
+            Value *value = malloc(sizeof(Value));
+            value->type = value_src->type;
+            switch (value_src->type) {
+                case INT_VALUE: {
+                    value->int_value = value_src->int_value;
+                    break;
+                }
+                case BOOL_VALUE: {
+                    value->bool_value = value_src->bool_value;
+                    break;
+                }
+                default:
+                    return NULL;
+            }
+            return value;
+        }
+        default:
+            return NULL;
     }
 }
 
@@ -483,6 +691,89 @@ Derivation *derive(Exp *exp) {
                 }
             }
         }
+        case IF_EXP: {
+            if (exp->if_exp == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_cond = exp->if_exp->exp_cond;
+            if (exp_cond == NULL) {
+                return NULL;
+            }
+
+            Derivation *premise_cond = derive(exp_cond);
+            if (premise_cond == NULL) {
+                return NULL;
+            }
+
+            bool bool_value_cond;
+            if (!try_get_bool_value_from_derivation(premise_cond, &bool_value_cond)) {
+                free_derivation(premise_cond);
+                return NULL;
+            }
+
+            if (bool_value_cond) {
+                Exp *exp_true = exp->if_exp->exp_true;
+                if (exp_true == NULL) {
+                    free_derivation(premise_cond);
+                    return NULL;
+                }
+
+                Derivation *premise_true = derive(exp_true);
+                if (premise_true == NULL) {
+                    free_derivation(premise_cond);
+                    return NULL;
+                }
+
+                Value *value_true = create_value_from_derivation(premise_true);
+                if (value_true == NULL) {
+                    free_derivation(premise_cond);
+                    free_derivation(premise_true);
+                    return NULL;
+                }
+
+                IfTrueDerivation *if_true_derivation = malloc(sizeof(IfTrueDerivation));
+                if_true_derivation->premise_cond = premise_cond;
+                if_true_derivation->premise_true = premise_true;
+                if_true_derivation->if_exp = exp->if_exp;
+                if_true_derivation->value = value_true;
+
+                Derivation *derivation = malloc(sizeof(Derivation));
+                derivation->type = IF_TRUE_DERIVATION;
+                derivation->if_true_derivation = if_true_derivation;
+                return derivation;
+            } else {
+                Exp *exp_false = exp->if_exp->exp_false;
+                if (exp_false == NULL) {
+                    free_derivation(premise_cond);
+                    return NULL;
+                }
+
+                Derivation *premise_false = derive(exp_false);
+                if (premise_false == NULL) {
+                    free_derivation(premise_cond);
+                    return NULL;
+                }
+
+                Value *value_false = create_value_from_derivation(premise_false);
+                if (value_false == NULL) {
+                    free_derivation(premise_cond);
+                    free_derivation(premise_false);
+                    return NULL;
+                }
+
+                IfFalseDerivation *if_false_derivation = malloc(sizeof(IfFalseDerivation));
+                if_false_derivation->premise_cond = premise_cond;
+                if_false_derivation->premise_false = premise_false;
+                if_false_derivation->if_exp = exp->if_exp;
+                if_false_derivation->value = value_false;
+
+                Derivation *derivation = malloc(sizeof(Derivation));
+                derivation->type = IF_FALSE_DERIVATION;
+                derivation->if_false_derivation = if_false_derivation;
+                return derivation;
+            }
+        }
         default:
             return NULL;
     }
@@ -552,10 +843,55 @@ void free_derivation(Derivation *derivation) {
             free(derivation);
             return;
         }
+        case IF_TRUE_DERIVATION: {
+            if (derivation->if_true_derivation == NULL) {
+                free(derivation);
+                return;
+            }
+
+            free_derivation(derivation->if_true_derivation->premise_cond);
+            free_derivation(derivation->if_true_derivation->premise_true);
+            free_value(derivation->if_true_derivation->value);
+            free(derivation->if_true_derivation);
+            free(derivation);
+            return;
+        }
+        case IF_FALSE_DERIVATION: {
+            if (derivation->if_false_derivation == NULL) {
+                free(derivation);
+                return;
+            }
+
+            free_derivation(derivation->if_false_derivation->premise_cond);
+            free_derivation(derivation->if_false_derivation->premise_false);
+            free_value(derivation->if_false_derivation->value);
+            free(derivation->if_false_derivation);
+            free(derivation);
+            return;
+        }
         default: {
             free(derivation);
             return;
         }
+    }
+}
+
+bool fprint_value(FILE *fp, Value *value) {
+    if (fp == NULL || value == NULL) {
+        return false;
+    }
+
+    switch (value->type) {
+        case INT_VALUE: {
+            fprintf(fp, "%d", value->int_value);
+            return true;
+        }
+        case BOOL_VALUE: {
+            fprintf(fp, "%s", value->bool_value ? "true" : "false");
+            return true;
+        }
+        default:
+            return false;
     }
 }
 
@@ -620,10 +956,33 @@ bool fprint_exp(FILE *fp, Exp *exp) {
             fprintf(fp, ")");
             return true;
         }
+        case IF_EXP: {
+            if (exp->if_exp == NULL) {
+                return false;
+            }
+
+            Exp *exp_cond = exp->if_exp->exp_cond;
+            Exp *exp_true = exp->if_exp->exp_true;
+            Exp *exp_false = exp->if_exp->exp_false;
+
+            fprintf(fp, "(if ");
+            if (!fprint_exp(fp, exp_cond)) {
+                return false;
+            }
+            fprintf(fp, " then ");
+            if (!fprint_exp(fp, exp_true)) {
+                return false;
+            }
+            fprintf(fp, " else ");
+            if (!fprint_exp(fp, exp_false)) {
+                return false;
+            }
+            fprintf(fp, ")");
+            return true;
+        }
         default:
             return false;
     }
-    return true;
 }
 
 bool fprint_int_exp(FILE *fp, IntExp *int_exp) {
@@ -656,6 +1015,17 @@ bool fprint_op_exp(FILE *fp, OpExp *op_exp) {
     Exp exp;
     exp.type = OP_EXP;
     exp.op_exp = op_exp;
+    return fprint_exp(fp, &exp);
+}
+
+bool fprint_if_exp(FILE *fp, IfExp *if_exp) {
+    if (fp == NULL || if_exp == NULL) {
+        return false;
+    }
+
+    Exp exp;
+    exp.type = IF_EXP;
+    exp.if_exp = if_exp;
     return fprint_exp(fp, &exp);
 }
 
@@ -696,7 +1066,7 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
-            fprintf(fp, " evalto %d by E-Bool {}", derivation->bool_derivation->bool_value);
+            fprintf(fp, " evalto %s by E-Bool {}", derivation->bool_derivation->bool_value ? "true" : "false");
             if (level == 0) {
                 fprintf(fp, "\n");
             }
@@ -875,6 +1245,72 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                     int_value_left,
                     int_value_right,
                     derivation->lt_derivation->bool_value ? "true" : "false");
+            fprint_indent(fp, level);
+            fprintf(fp, "}");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case IF_TRUE_DERIVATION: {
+            IfTrueDerivation *if_true_derivation = derivation->if_true_derivation;
+            if (if_true_derivation == NULL) {
+                return false;
+            }
+
+            if (!fprint_if_exp(fp, if_true_derivation->if_exp)) {
+                return false;
+            }
+
+            Value *value = if_true_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            fprintf(fp, " evalto ");
+            fprint_value(fp, value);
+            fprintf(fp, " by E-IfT {\n");
+            if (!fprint_derivation_impl(fp, if_true_derivation->premise_cond, level + 1)) {
+                return false;
+            }
+            fprintf(fp, ";\n");
+            if (!fprint_derivation_impl(fp, if_true_derivation->premise_true, level + 1)) {
+                return false;
+            }
+            fprintf(fp, "\n");
+            fprint_indent(fp, level);
+            fprintf(fp, "}");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case IF_FALSE_DERIVATION: {
+            IfFalseDerivation *if_false_derivation = derivation->if_false_derivation;
+            if (if_false_derivation == NULL) {
+                return false;
+            }
+
+            if (!fprint_if_exp(fp, if_false_derivation->if_exp)) {
+                return false;
+            }
+
+            Value *value = if_false_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            fprintf(fp, " evalto ");
+            fprint_value(fp, value);
+            fprintf(fp, " by E-IfF {\n");
+            if (!fprint_derivation_impl(fp, if_false_derivation->premise_cond, level + 1)) {
+                return false;
+            }
+            fprintf(fp, ";\n");
+            if (!fprint_derivation_impl(fp, if_false_derivation->premise_false, level + 1)) {
+                return false;
+            }
+            fprintf(fp, "\n");
             fprint_indent(fp, level);
             fprintf(fp, "}");
             if (level == 0) {

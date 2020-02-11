@@ -83,13 +83,19 @@ typedef struct TimesDerivationTag TimesDerivation;
 
 typedef struct LtDerivationTag LtDerivation;
 
+typedef struct IfTrueDerivationTag IfTrueDerivation;
+
+typedef struct IfFalseDerivationTag IfFalseDerivation;
+
 typedef enum {
     INT_DERIVATION,
     BOOL_DERIVATION,
     PLUS_DERIVATION,
     MINUS_DERIVATION,
     TIMES_DERIVATION,
-    LT_DERIVATION
+    LT_DERIVATION,
+    IF_TRUE_DERIVATION,
+    IF_FALSE_DERIVATION
 } DerivationType;
 
 typedef struct {
@@ -101,6 +107,8 @@ typedef struct {
         MinusDerivation *minus_derivation;
         TimesDerivation *times_derivation;
         LtDerivation *lt_derivation;
+        IfTrueDerivation *if_true_derivation;
+        IfFalseDerivation *if_false_derivation;
     };
 } Derivation;
 
@@ -132,6 +140,20 @@ struct LtDerivationTag {
     bool bool_value;
 };
 
+struct IfTrueDerivationTag {
+    Derivation *premise_cond;
+    Derivation *premise_true;
+    IfExp *if_exp;
+    Value *value;
+};
+
+struct IfFalseDerivationTag {
+    Derivation *premise_cond;
+    Derivation *premise_false;
+    IfExp *if_exp;
+    Value *value;
+};
+
 Value *create_int_value(const int int_value);
 
 Value *create_bool_value(const bool bool_value);
@@ -156,6 +178,12 @@ void free_exp(Exp *exp);
 
 Value *evaluate(const Exp *exp);
 
+bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value);
+
+bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value);
+
+Value *create_value_from_derivation(Derivation *derivation);
+
 Derivation *derive(Exp *exp);
 
 void free_derivation(Derivation *derivation);
@@ -167,6 +195,8 @@ bool fprint_int_exp(FILE *fp, IntExp *exp);
 bool fprint_bool_exp(FILE *fp, BoolExp *exp);
 
 bool fprint_op_exp(FILE *fp, OpExp *exp);
+
+bool fprint_if_exp(FILE *fp, IfExp *exp);
 
 void fprint_indent(FILE *fp, const int level);
 
