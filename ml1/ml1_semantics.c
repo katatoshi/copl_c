@@ -334,16 +334,20 @@ Derivation *derive(Exp *exp) {
 
             int int_value_left;
             if (!try_get_int_value_from_derivation(premise_left, &int_value_left)) {
+                free_derivation(premise_left);
                 return NULL;
             }
 
             Derivation *premise_right = derive(exp_right);
             if (premise_right == NULL) {
+                free_derivation(premise_left);
                 return NULL;
             }
 
             int int_value_right;
             if (!try_get_int_value_from_derivation(premise_right, &int_value_right)) {
+                free_derivation(premise_left);
+                free_derivation(premise_right);
                 return NULL;
             }
 
