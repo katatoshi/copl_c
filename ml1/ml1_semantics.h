@@ -27,10 +27,13 @@ typedef struct {
 
 typedef struct OpExpTag OpExp;
 
+typedef struct IfExpTag IfExp;
+
 typedef enum {
     INT_EXP,
     BOOL_EXP,
-    OP_EXP
+    OP_EXP,
+    IF_EXP
 } ExpType;
 
 typedef struct {
@@ -39,6 +42,7 @@ typedef struct {
         IntExp *int_exp;
         BoolExp *bool_exp;
         OpExp *op_exp;
+        IfExp *if_exp;
     };
 } Exp;
 
@@ -53,6 +57,12 @@ struct OpExpTag {
     OpExpType type;
     Exp *exp_left;
     Exp *exp_right;
+};
+
+struct IfExpTag {
+    Exp *exp_cond;
+    Exp *exp_true;
+    Exp *exp_false;
 };
 
 typedef struct {
@@ -139,6 +149,8 @@ Exp *create_minus_op_exp(Exp *exp_left, Exp *exp_right);
 Exp *create_times_op_exp(Exp *exp_left, Exp *exp_right);
 
 Exp *create_lt_op_exp(Exp *exp_left, Exp *exp_right);
+
+Exp *create_if_exp(Exp *exp_cond, Exp *exp_true, Exp *exp_false);
 
 void free_exp(Exp *exp);
 

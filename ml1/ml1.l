@@ -13,6 +13,9 @@ int yywrap(void) {
 "-" return MINUS;
 "*" return TIMES;
 "<" return LT;
+"if" return IF;
+"then" return THEN;
+"else" return ELSE;
 [0-9]+ {
     int value;
     sscanf(yytext, "%d", &value);

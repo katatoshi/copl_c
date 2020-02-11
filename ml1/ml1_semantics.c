@@ -95,6 +95,19 @@ Exp *create_lt_op_exp(Exp *exp_left, Exp *exp_right) {
     return exp;
 }
 
+Exp *create_if_exp(Exp *exp_cond, Exp *exp_true, Exp *exp_false) {
+    IfExp *if_exp = malloc(sizeof(IfExp));
+    if_exp->exp_cond = exp_cond;
+    if_exp->exp_true = exp_true;
+    if_exp->exp_false = exp_false;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = IF_EXP;
+    exp->if_exp = if_exp;
+
+    return exp;
+}
+
 void free_exp(Exp *exp) {
     if (exp == NULL) {
         return;
@@ -120,6 +133,19 @@ void free_exp(Exp *exp) {
             free_exp(exp->op_exp->exp_left);
             free_exp(exp->op_exp->exp_right);
             free(exp->op_exp);
+            free(exp);
+            return;
+        }
+        case IF_EXP: {
+            if (exp->if_exp == NULL) {
+                free(exp);
+                return;
+            }
+
+            free_exp(exp->if_exp->exp_cond);
+            free_exp(exp->if_exp->exp_true);
+            free_exp(exp->if_exp->exp_false);
+            free(exp->if_exp);
             free(exp);
             return;
         }
@@ -228,6 +254,58 @@ Value *evaluate(const Exp *exp) {
                 }
                 default:
                     return NULL;
+            }
+        }
+        case IF_EXP: {
+            if (exp->if_exp == NULL) {
+                return NULL;
+            }
+
+            const Exp *exp_cond = exp->if_exp->exp_cond;
+            if (exp_cond == NULL) {
+                return NULL;
+            }
+
+            Value *value_cond = evaluate(exp_cond);
+            if (value_cond == NULL) {
+                return NULL;
+            }
+
+            if (value_cond->type != BOOL_VALUE) {
+                free_value(value_cond);
+                return NULL;
+            }
+
+            if (value_cond->bool_value) {
+                const Exp *exp_true = exp->if_exp->exp_true;
+                if (exp_true == NULL) {
+                    free_value(value_cond);
+                    return NULL;
+                }
+
+                Value *value_true = evaluate(exp_true);
+                if (value_true == NULL) {
+                    free_value(value_cond);
+                    return NULL;
+                }
+
+                free_value(value_cond);
+                return value_true;
+            } else {
+                const Exp *exp_false = exp->if_exp->exp_false;
+                if (exp_false == NULL) {
+                    free_value(value_cond);
+                    return NULL;
+                }
+
+                Value *value_false = evaluate(exp_false);
+                if (value_false == NULL) {
+                    free_value(value_cond);
+                    return NULL;
+                }
+
+                free_value(value_cond);
+                return value_false;
             }
         }
         default:

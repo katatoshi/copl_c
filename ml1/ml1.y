@@ -18,8 +18,8 @@ bool is_eof;
     Exp *exp;
 }
 %token <exp> INT BOOL
-%token PLUS MINUS TIMES LT LP RP LF QUIT END_OF_FILE
-%type <exp> exp exp_plus exp_times exp_primary
+%token PLUS MINUS TIMES LT IF THEN ELSE LP RP LF QUIT END_OF_FILE
+%type <exp> exp exp_lt exp_plus exp_times exp_primary
 %%
 line
     : exp LF {
@@ -48,8 +48,15 @@ line
     }
     ;
 exp
+    : exp_lt
+    | IF exp THEN exp ELSE exp
+    {
+        $$ = create_if_exp($2, $4, $6);
+    }
+    ;
+exp_lt
     : exp_plus
-    | exp LT exp_plus {
+    | exp_lt LT exp_plus {
         $$ = create_lt_op_exp($1, $3);
     }
     ;
