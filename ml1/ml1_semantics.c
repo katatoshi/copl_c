@@ -177,15 +177,19 @@ Value *evaluate(const Exp *exp) {
             }
 
             if (value_left->type != INT_VALUE) {
+                free_value(value_left);
                 return NULL;
             }
 
             Value *value_right = evaluate(exp_right);
             if (value_right == NULL) {
+                free_value(value_left);
                 return NULL;
             }
 
             if (value_right->type != INT_VALUE) {
+                free_value(value_left);
+                free_value(value_right);
                 return NULL;
             }
 
