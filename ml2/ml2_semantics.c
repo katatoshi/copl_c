@@ -1,7 +1,61 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ml2_semantics.h"
+
+Var *create_var(const char *src_name) {
+    if (src_name == NULL) {
+        return NULL;
+    }
+
+    size_t name_len = strlen(src_name);
+    if (name_len < 1 || VAR_NAME_LEN_MAX < name_len) {
+        return NULL;
+    }
+
+    char *dst_name = malloc(sizeof(char) * name_len + 1);
+    strncpy(dst_name, src_name, name_len);
+
+    Var *var = malloc(sizeof(Var));
+    var->name = dst_name;
+    var->name_len = name_len;
+    return var;
+}
+
+Var *copy_var(const Var* var) {
+    if (var == NULL) {
+        return NULL;
+    }
+
+    return create_var(var->name);
+}
+
+bool is_same_var(const Var *var_1, const Var *var_2) {
+    if (var_1 == NULL || var_2 == NULL) {
+        return false;
+    }
+
+    if (var_1->name == NULL || var_2->name == NULL) {
+        return false;
+    }
+
+    if (var_1->name_len != var_2->name_len) {
+        return false;
+    }
+
+    return strncmp(var_1->name, var_2->name, var_1->name_len) == 0;
+}
+
+void free_var(Var *var) {
+    if (var == NULL) {
+        return;
+    }
+
+    free(var->name);
+    free(var);
+}
 
 Value *create_int_value(const int int_value) {
     Value *value = malloc(sizeof(Value));
@@ -17,8 +71,99 @@ Value *create_bool_value(const bool bool_value) {
     return value;
 }
 
+Value *copy_value(const Value *value) {
+    if (value == NULL) {
+        return NULL;
+    }
+
+    switch (value->type) {
+        case INT_VALUE:
+            return create_int_value(value->int_value);
+        case BOOL_VALUE:
+            return create_bool_value(value->bool_value);
+        default:
+            return NULL;
+    }
+}
+
 void free_value(Value *value) {
+    if (value == NULL) {
+        return;
+    }
+
     free(value);
+}
+
+Env *copy_env(const Env *env) {
+    if (env == NULL) {
+        return NULL;
+    }
+
+    Env *env_new = malloc(sizeof(Env));
+    if (env->var_binding == NULL) {
+        env_new->var_binding = NULL;
+        return env_new;
+    }
+
+    VarBinding *var_binding_new_prev = NULL;
+    VarBinding *var_binding = env->var_binding;
+    while (var_binding != NULL) {
+        if (var_binding->var == NULL || var_binding->value == NULL) {
+            free_env(env_new);
+            return NULL;
+        }
+
+        VarBinding *var_binding_new = malloc(sizeof(VarBinding));
+        var_binding_new->var = copy_var(var_binding->var);
+        var_binding_new->value = copy_value(var_binding->value);
+        var_binding_new->next = NULL;
+
+        if (var_binding_new_prev == NULL) {
+            env_new->var_binding = var_binding_new;
+        } else {
+            var_binding_new_prev->next = var_binding_new;
+        }
+
+        var_binding_new_prev = var_binding_new;
+        var_binding = var_binding->next;
+    }
+
+    return env_new;
+}
+
+Env *create_appended_env(const Env *env, const Var *var, const Value *value) {
+    if (env == NULL || var == NULL || value == NULL) {
+        return NULL;
+    }
+
+    Env *env_new = copy_env(env);
+
+    VarBinding *var_binding = malloc(sizeof(VarBinding));
+    var_binding->var = copy_var(var);
+    var_binding->value = copy_value(value);
+    var_binding->next = env_new->var_binding;
+
+    env_new->var_binding = var_binding;
+
+    return env_new;
+}
+
+void free_env(Env *env) {
+    if (env == NULL) {
+        return;
+    }
+
+    VarBinding *var_binding = env->var_binding;
+    while (var_binding != NULL) {
+        VarBinding *var_binding_next = var_binding->next;
+
+        free_var(var_binding->var);
+        free_value(var_binding->value);
+        free(var_binding);
+
+        var_binding = var_binding_next;
+    }
+    free(env);
 }
 
 Exp *create_int_exp(const int int_value) {
@@ -39,6 +184,22 @@ Exp *create_bool_exp(const bool bool_value) {
     Exp *exp = malloc(sizeof(Exp));
     exp->type = BOOL_EXP;
     exp->bool_exp = bool_exp;
+
+    return exp;
+}
+
+Exp *create_var_exp(const char *src_name) {
+    Var *var = create_var(src_name);
+    if (var == NULL) {
+        return NULL;
+    }
+
+    VarExp *var_exp = malloc(sizeof(VarExp));
+    var_exp->var = var;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = VAR_EXP;
+    exp->var_exp = var_exp;
 
     return exp;
 }
@@ -108,6 +269,19 @@ Exp *create_if_exp(Exp *exp_cond, Exp *exp_true, Exp *exp_false) {
     return exp;
 }
 
+Exp *create_let_exp(Var *var, Exp *exp_1, Exp *exp_2) {
+    LetExp *let_exp = malloc(sizeof(LetExp));
+    let_exp->var = var;
+    let_exp->exp_1 = exp_1;
+    let_exp->exp_2 = exp_2;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = LET_EXP;
+    exp->let_exp = let_exp;
+
+    return exp;
+}
+
 void free_exp(Exp *exp) {
     if (exp == NULL) {
         return;
@@ -121,6 +295,17 @@ void free_exp(Exp *exp) {
         }
         case BOOL_EXP: {
             free(exp->bool_exp);
+            free(exp);
+            return;
+        }
+        case VAR_EXP: {
+            if (exp->var_exp == NULL) {
+                free(exp);
+                return;
+            }
+
+            free_var(exp->var_exp->var);
+            free(exp->var_exp);
             free(exp);
             return;
         }
@@ -149,6 +334,19 @@ void free_exp(Exp *exp) {
             free(exp);
             return;
         }
+        case LET_EXP: {
+            if (exp->let_exp == NULL) {
+                free(exp);
+                return;
+            }
+
+            free_var(exp->let_exp->var);
+            free_exp(exp->let_exp->exp_1);
+            free_exp(exp->let_exp->exp_2);
+            free(exp->let_exp);
+            free(exp);
+            return;
+        }
         default: {
             free(exp);
             return;
@@ -156,7 +354,11 @@ void free_exp(Exp *exp) {
     }
 }
 
-Value *evaluate(const Exp *exp) {
+Value *evaluate(Env *env, const Exp *exp) {
+    if (env == NULL) {
+        return NULL;
+    }
+
     if (exp == NULL) {
         return NULL;
     }
@@ -182,6 +384,22 @@ Value *evaluate(const Exp *exp) {
             value->bool_value = exp->bool_exp->bool_value;
             return value;
         }
+        case VAR_EXP: {
+            if (exp->var_exp == NULL) {
+                return NULL;
+            }
+
+            VarBinding *var_binding = env->var_binding;
+            while (var_binding != NULL) {
+                if (is_same_var(var_binding->var, exp->var_exp->var)) {
+                    return copy_value(var_binding->value);
+                }
+
+                var_binding = var_binding->next;
+            }
+
+            return NULL;
+        }
         case OP_EXP: {
             if (exp->op_exp == NULL) {
                 return NULL;
@@ -197,7 +415,7 @@ Value *evaluate(const Exp *exp) {
                 return NULL;
             }
 
-            Value *value_left = evaluate(exp_left);
+            Value *value_left = evaluate(env, exp_left);
             if (value_left == NULL) {
                 return NULL;
             }
@@ -207,7 +425,7 @@ Value *evaluate(const Exp *exp) {
                 return NULL;
             }
 
-            Value *value_right = evaluate(exp_right);
+            Value *value_right = evaluate(env, exp_right);
             if (value_right == NULL) {
                 free_value(value_left);
                 return NULL;
@@ -266,7 +484,7 @@ Value *evaluate(const Exp *exp) {
                 return NULL;
             }
 
-            Value *value_cond = evaluate(exp_cond);
+            Value *value_cond = evaluate(env, exp_cond);
             if (value_cond == NULL) {
                 return NULL;
             }
@@ -283,7 +501,7 @@ Value *evaluate(const Exp *exp) {
                     return NULL;
                 }
 
-                Value *value_true = evaluate(exp_true);
+                Value *value_true = evaluate(env, exp_true);
                 if (value_true == NULL) {
                     free_value(value_cond);
                     return NULL;
@@ -298,7 +516,7 @@ Value *evaluate(const Exp *exp) {
                     return NULL;
                 }
 
-                Value *value_false = evaluate(exp_false);
+                Value *value_false = evaluate(env, exp_false);
                 if (value_false == NULL) {
                     free_value(value_cond);
                     return NULL;
@@ -307,6 +525,41 @@ Value *evaluate(const Exp *exp) {
                 free_value(value_cond);
                 return value_false;
             }
+        }
+        case LET_EXP: {
+            if (exp->let_exp == NULL) {
+                return NULL;
+            }
+
+            if (exp->let_exp->var == NULL) {
+                return NULL;
+            }
+
+            if (exp->let_exp->exp_1 == NULL) {
+                return NULL;
+            }
+
+            if (exp->let_exp->exp_2 == NULL) {
+                return NULL;
+            }
+
+            Value *value_1 = evaluate(env, exp->let_exp->exp_1);
+            if (value_1 == NULL) {
+                return NULL;
+            }
+
+            Env *env_new = create_appended_env(env, exp->let_exp->var, value_1);
+            if (env_new == NULL) {
+                free_value(value_1);
+                return NULL;
+            }
+
+            Value *value_2 = evaluate(env_new, exp->let_exp->exp_2);
+
+            free_env(env_new);
+            free_value(value_1);
+
+            return value_2;
         }
         default:
             return NULL;
@@ -893,6 +1146,48 @@ bool fprint_value(FILE *fp, Value *value) {
         default:
             return false;
     }
+}
+
+bool fprint_var(FILE *fp, Var *var) {
+    if (fp == NULL || var == NULL) {
+        return false;
+    }
+
+    if (var->name == NULL) {
+        return false;
+    }
+
+    fprintf(fp, "%s", var->name);
+    return true;
+}
+
+bool fprint_env(FILE *fp, Env *env) {
+    if (fp == NULL || env == NULL) {
+        return false;
+    }
+
+    fprintf(fp, "");
+
+    VarBinding *var_binding = env->var_binding;
+    while (var_binding != NULL) {
+        if (var_binding->var == NULL || var_binding->value == NULL) {
+            return false;
+        }
+
+        if (!fprint_var(fp, var_binding->var)) {
+            return false;
+        }
+        fprintf(fp, " = ");
+        if (!fprint_value(fp, var_binding->value)) {
+            return false;
+        }
+        if (var_binding->next != NULL) {
+            fprintf(fp, ", ");
+        }
+        var_binding = var_binding->next;
+    }
+
+    return true;
 }
 
 bool fprint_exp(FILE *fp, Exp *exp) {

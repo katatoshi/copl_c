@@ -4,6 +4,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define VAR_NAME_LEN_MAX (32)
+
+typedef struct {
+    char *name;
+    size_t name_len;
+} Var;
+
 typedef enum {
     INT_VALUE,
     BOOL_VALUE
@@ -17,6 +24,16 @@ typedef struct {
     };
 } Value;
 
+typedef struct VarBindingTag {
+    Var *var;
+    Value *value;
+    struct VarBindingTag *next;
+} VarBinding;
+
+typedef struct {
+    VarBinding *var_binding;
+} Env;
+
 typedef struct {
     int int_value;
 } IntExp;
@@ -25,15 +42,23 @@ typedef struct {
     bool bool_value;
 } BoolExp;
 
+typedef struct {
+    Var *var;
+} VarExp;
+
 typedef struct OpExpTag OpExp;
 
 typedef struct IfExpTag IfExp;
 
+typedef struct LetExpTag LetExp;
+
 typedef enum {
     INT_EXP,
     BOOL_EXP,
+    VAR_EXP,
     OP_EXP,
-    IF_EXP
+    IF_EXP,
+    LET_EXP
 } ExpType;
 
 typedef struct {
@@ -41,8 +66,10 @@ typedef struct {
     union {
         IntExp *int_exp;
         BoolExp *bool_exp;
+        VarExp *var_exp;
         OpExp *op_exp;
         IfExp *if_exp;
+        LetExp *let_exp;
     };
 } Exp;
 
@@ -63,6 +90,12 @@ struct IfExpTag {
     Exp *exp_cond;
     Exp *exp_true;
     Exp *exp_false;
+};
+
+struct LetExpTag {
+    Var *var;
+    Exp *exp_1;
+    Exp *exp_2;
 };
 
 typedef struct {
@@ -154,15 +187,33 @@ struct IfFalseDerivationTag {
     Value *value;
 };
 
+Var *create_var(const char *src_name);
+
+Var *copy_var(const Var *var);
+
+bool is_same_var(const Var *var_1, const Var *var_2);
+
+void free_var(Var *var);
+
 Value *create_int_value(const int int_value);
 
 Value *create_bool_value(const bool bool_value);
 
+Value *copy_value(const Value *value);
+
 void free_value(Value *value);
+
+Env *copy_env(const Env *env);
+
+Env *create_appended_env(const Env *env, const Var *var, const Value *value);
+
+void free_env(Env *env);
 
 Exp *create_int_exp(const int int_value);
 
 Exp *create_bool_exp(const bool bool_value);
+
+Exp *create_var_exp(const char *src_name);
 
 Exp *create_plus_op_exp(Exp *exp_left, Exp *exp_right);
 
@@ -174,9 +225,11 @@ Exp *create_lt_op_exp(Exp *exp_left, Exp *exp_right);
 
 Exp *create_if_exp(Exp *exp_cond, Exp *exp_true, Exp *exp_false);
 
+Exp *create_let_exp(Var *var, Exp *exp_1, Exp *exp_2);
+
 void free_exp(Exp *exp);
 
-Value *evaluate(const Exp *exp);
+Value *evaluate(Env *env, const Exp *exp);
 
 bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value);
 
@@ -187,6 +240,12 @@ Value *create_value_from_derivation(Derivation *derivation);
 Derivation *derive(Exp *exp);
 
 void free_derivation(Derivation *derivation);
+
+bool fprint_value(FILE *fp, Value *value);
+
+bool fprint_var(FILE *fp, Var *var);
+
+bool fprint_env(FILE *fp, Env *exp);
 
 bool fprint_exp(FILE *fp, Exp *exp);
 

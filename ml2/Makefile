@@ -1,7 +1,7 @@
-ml2 :ml2_semantics.o y.tab.o lex.yy.o main.o
+ml2 : ml2_semantics.o y.tab.o lex.yy.o main.o
 	gcc -o $@ $^
 
-run_ml2 : ml2
+run : ml2
 	./ml2
 
 y.tab.c : ml2.y
@@ -10,11 +10,11 @@ y.tab.c : ml2.y
 lex.yy.c : ml2.l
 	lex -o $@ $^
 
-test_ml2_semantics : test_ml2_semantics.o ml2_semantics.o
+test : test_ml2_semantics.o ml2_semantics.o
 	gcc -o $@ $^
 
-run_test_ml2_semantics : test_ml2_semantics
-	./test_ml2_semantics
+run_test : test
+	./test
 
 .c.o :
 	gcc -c $<
@@ -26,6 +26,8 @@ y.tab.o : ml2_semantics.h
 lex.yy.o : ml2_semantics.h y.tab.h
 
 main.o : ml2_semantics.h y.tab.h
+
+test_ml2_semantics.o : ml2_semantics.h
 
 clean :
 	rm -f ./ml2
