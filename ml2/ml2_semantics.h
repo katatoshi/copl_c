@@ -229,7 +229,9 @@ Exp *create_let_exp(Var *var, Exp *exp_1, Exp *exp_2);
 
 void free_exp(Exp *exp);
 
-Value *evaluate(Env *env, const Exp *exp);
+Value *evaluate(const Exp *exp);
+
+Value *evaluate_impl(const Env *env, const Exp *exp);
 
 bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value);
 

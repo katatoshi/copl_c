@@ -354,7 +354,16 @@ void free_exp(Exp *exp) {
     }
 }
 
-Value *evaluate(Env *env, const Exp *exp) {
+Value *evaluate(const Exp *exp) {
+    if (exp == NULL) {
+        return NULL;
+    }
+
+    Env env = { .var_binding = NULL };
+    return evaluate_impl(&env, exp);
+}
+
+Value *evaluate_impl(const Env *env, const Exp *exp) {
     if (env == NULL) {
         return NULL;
     }
@@ -415,7 +424,7 @@ Value *evaluate(Env *env, const Exp *exp) {
                 return NULL;
             }
 
-            Value *value_left = evaluate(env, exp_left);
+            Value *value_left = evaluate_impl(env, exp_left);
             if (value_left == NULL) {
                 return NULL;
             }
@@ -425,7 +434,7 @@ Value *evaluate(Env *env, const Exp *exp) {
                 return NULL;
             }
 
-            Value *value_right = evaluate(env, exp_right);
+            Value *value_right = evaluate_impl(env, exp_right);
             if (value_right == NULL) {
                 free_value(value_left);
                 return NULL;
@@ -484,7 +493,7 @@ Value *evaluate(Env *env, const Exp *exp) {
                 return NULL;
             }
 
-            Value *value_cond = evaluate(env, exp_cond);
+            Value *value_cond = evaluate_impl(env, exp_cond);
             if (value_cond == NULL) {
                 return NULL;
             }
@@ -501,7 +510,7 @@ Value *evaluate(Env *env, const Exp *exp) {
                     return NULL;
                 }
 
-                Value *value_true = evaluate(env, exp_true);
+                Value *value_true = evaluate_impl(env, exp_true);
                 if (value_true == NULL) {
                     free_value(value_cond);
                     return NULL;
@@ -516,7 +525,7 @@ Value *evaluate(Env *env, const Exp *exp) {
                     return NULL;
                 }
 
-                Value *value_false = evaluate(env, exp_false);
+                Value *value_false = evaluate_impl(env, exp_false);
                 if (value_false == NULL) {
                     free_value(value_cond);
                     return NULL;
@@ -543,7 +552,7 @@ Value *evaluate(Env *env, const Exp *exp) {
                 return NULL;
             }
 
-            Value *value_1 = evaluate(env, exp->let_exp->exp_1);
+            Value *value_1 = evaluate_impl(env, exp->let_exp->exp_1);
             if (value_1 == NULL) {
                 return NULL;
             }
@@ -554,7 +563,7 @@ Value *evaluate(Env *env, const Exp *exp) {
                 return NULL;
             }
 
-            Value *value_2 = evaluate(env_new, exp->let_exp->exp_2);
+            Value *value_2 = evaluate_impl(env_new, exp->let_exp->exp_2);
 
             free_env(env_new);
             free_value(value_1);

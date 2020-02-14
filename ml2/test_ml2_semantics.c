@@ -18,7 +18,7 @@ void test1(void) {
         )
     );
     Env env = { .var_binding = NULL };
-    Value *value1 = evaluate(&env, exp1);
+    Value *value1 = evaluate_impl(&env, exp1);
     printf("%s\n", value1->bool_value ? "true" : "false");
     free_value(value1);
 
@@ -37,7 +37,7 @@ void test2(void) {
     VarBinding var_binding1 = { .var = var1, .value = value1, .next = NULL };
     VarBinding var_binding2 = { .var = var2, .value = value2, .next = &var_binding1 };
     Env env = { .var_binding = &var_binding2 };
-    Value *value3 = evaluate(&env, exp1);
+    Value *value3 = evaluate_impl(&env, exp1);
     printf("%d\n", value3->int_value);
     free_value(value3);
     free_var(var2);
@@ -60,7 +60,7 @@ void test3(void) {
         )
     );
     Env env = { .var_binding = NULL };
-    Value *value1 = evaluate(&env, exp1);
+    Value *value1 = evaluate_impl(&env, exp1);
     printf("%d\n", value1->int_value);
     free_value(value1);
     free_exp(exp1);
@@ -86,7 +86,7 @@ void test4(void) {
         )
     );
     Env env = { .var_binding = NULL };
-    Value *value1 = evaluate(&env, exp1);
+    Value *value1 = evaluate_impl(&env, exp1);
     printf("%d\n", value1->int_value);
     free_value(value1);
     free_exp(exp1);

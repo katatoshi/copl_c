@@ -52,8 +52,7 @@ int main(int argc, char *argv[]) {
 
         switch (output_type) {
             case OUTPUT_VALUE: {
-                Env env = { .var_binding = NULL };
-                Value *value = evaluate(&env, parsed_exp);
+                Value *value = evaluate(parsed_exp);
                 if (value == NULL) {
                     printf("evaluation failed\n");
                     free_exp(parsed_exp);
