@@ -15,10 +15,12 @@ Exp *parsed_exp;
 bool is_eof;
 %}
 %union {
+    Var *var;
     Exp *exp;
 }
+%token <var> VAR
 %token <exp> INT BOOL
-%token PLUS MINUS TIMES LT IF THEN ELSE LP RP LF QUIT END_OF_FILE
+%token PLUS MINUS TIMES LT IF THEN ELSE LET EQ IN LP RP LF QUIT END_OF_FILE
 %type <exp> exp exp_lt exp_plus exp_times exp_primary
 %%
 line
@@ -49,9 +51,11 @@ line
     ;
 exp
     : exp_lt
-    | IF exp THEN exp ELSE exp
-    {
+    | IF exp THEN exp ELSE exp {
         $$ = create_if_exp($2, $4, $6);
+    }
+    | LET VAR EQ exp IN exp {
+        $$ = create_let_exp($2, $4, $6);
     }
     ;
 exp_lt
@@ -77,10 +81,14 @@ exp_times
     ;
 exp_primary
     : INT
-    | BOOL
     | MINUS INT {
         $$ = create_int_exp(-$2->int_exp->int_value);
         free_exp($2);
+    }
+    | BOOL
+    | VAR {
+        $$ = create_var_exp($1->name);
+        free_var($1);
     }
     | LP exp RP {
         $$ = $2;

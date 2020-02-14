@@ -92,11 +92,77 @@ void test4(void) {
     free_exp(exp1);
 }
 
+void test5(void) {
+    Exp *exp1 = create_let_exp(
+        create_var("x"),
+        create_bool_exp(true),
+        create_let_exp(
+            create_var("y"),
+            create_int_exp(4),
+            create_if_exp(
+                create_var_exp("x"),
+                create_times_op_exp(
+                    create_var_exp("y"),
+                    create_int_exp(2)
+                ),
+                create_var_exp("y")
+            )
+        )
+    );
+    Value *value1 = evaluate(exp1);
+    printf("%d\n", value1->int_value);
+    free_value(value1);
+    free_exp(exp1);
+
+    Exp *exp2 = create_let_exp(
+        create_var("x"),
+        create_bool_exp(true),
+        create_let_exp(
+            create_var("y"),
+            create_int_exp(4),
+            create_if_exp(
+                create_var_exp("x"),
+                create_plus_op_exp(
+                    create_var_exp("y"),
+                    create_int_exp(2)
+                ),
+                create_var_exp("y")
+            )
+        )
+    );
+    Value *value2 = evaluate(exp2);
+    printf("%d\n", value2->int_value);
+    free_value(value2);
+    free_exp(exp2);
+
+    Exp *exp3 = create_let_exp(
+        create_var("x"),
+        create_bool_exp(true),
+        create_let_exp(
+            create_var("y"),
+            create_int_exp(4),
+            create_if_exp(
+                create_var_exp("x"),
+                create_times_op_exp(
+                    create_var_exp("y"),
+                    create_int_exp(2)
+                ),
+                create_var_exp("y")
+            )
+        )
+    );
+    Value *value3 = evaluate(exp3);
+    printf("%d\n", value3->int_value);
+    free_value(value3);
+    free_exp(exp3);
+}
+
 int main(void) {
     test1();
     test2();
     test3();
     test4();
+    test5();
 
     return 0;
 }
