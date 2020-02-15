@@ -34,7 +34,7 @@ int yywrap(void) {
     yylval.exp = create_bool_exp(true);
     return BOOL;
 }
-[a-z][a-z0-9_]* {
+([a-z][a-zA-Z0-9_']*|_[a-zA-Z0-9_']+) {
     if (VAR_NAME_LEN_MAX < strlen(yytext)) {
         return 1;
     }
