@@ -15,8 +15,8 @@ Var *create_var(const char *src_name) {
         return NULL;
     }
 
-    char *dst_name = malloc(sizeof(char) * name_len + 1);
-    strncpy(dst_name, src_name, name_len);
+    char *dst_name = malloc(name_len + 1);
+    snprintf(dst_name, VAR_NAME_LEN_MAX, "%s", src_name);
 
     Var *var = malloc(sizeof(Var));
     var->name = dst_name;
@@ -188,8 +188,7 @@ Exp *create_bool_exp(const bool bool_value) {
     return exp;
 }
 
-Exp *create_var_exp(const char *src_name) {
-    Var *var = create_var(src_name);
+Exp *create_var_exp(Var *var) {
     if (var == NULL) {
         return NULL;
     }
@@ -1138,7 +1137,7 @@ void free_derivation(Derivation *derivation) {
     }
 }
 
-bool fprint_value(FILE *fp, Value *value) {
+bool fprint_value(FILE *fp, const Value *value) {
     if (fp == NULL || value == NULL) {
         return false;
     }
@@ -1157,7 +1156,7 @@ bool fprint_value(FILE *fp, Value *value) {
     }
 }
 
-bool fprint_var(FILE *fp, Var *var) {
+bool fprint_var(FILE *fp, const Var *var) {
     if (fp == NULL || var == NULL) {
         return false;
     }
@@ -1170,7 +1169,7 @@ bool fprint_var(FILE *fp, Var *var) {
     return true;
 }
 
-bool fprint_env(FILE *fp, Env *env) {
+bool fprint_env(FILE *fp, const Env *env) {
     if (fp == NULL || env == NULL) {
         return false;
     }
@@ -1199,7 +1198,7 @@ bool fprint_env(FILE *fp, Env *env) {
     return true;
 }
 
-bool fprint_exp(FILE *fp, Exp *exp) {
+bool fprint_exp(FILE *fp, const Exp *exp) {
     if (fp == NULL || exp == NULL) {
         return false;
     }
@@ -1219,6 +1218,14 @@ bool fprint_exp(FILE *fp, Exp *exp) {
             }
 
             fprintf(fp, "%s", exp->bool_exp->bool_value ? "true" : "false");
+            return true;
+        }
+        case VAR_EXP: {
+            if (exp->var_exp == NULL) {
+                return false;
+            }
+
+            fprint_var(fp, exp->var_exp->var);
             return true;
         }
         case OP_EXP: {
@@ -1284,6 +1291,30 @@ bool fprint_exp(FILE *fp, Exp *exp) {
             fprintf(fp, ")");
             return true;
         }
+        case LET_EXP: {
+            if (exp->let_exp == NULL) {
+                return false;
+            }
+
+            Var *var = exp->let_exp->var;
+            Exp *exp_1= exp->let_exp->exp_1;
+            Exp *exp_2= exp->let_exp->exp_2;
+
+            fprintf(fp, "(let ");
+            if (!fprint_var(fp, var)) {
+                return false;
+            }
+            fprintf(fp, " = ");
+            if (!fprint_exp(fp, exp_1)) {
+                return false;
+            }
+            fprintf(fp, " in ");
+            if (!fprint_exp(fp, exp_2)) {
+                return false;
+            }
+            fprintf(fp, ")");
+            return true;
+        }
         default:
             return false;
     }
@@ -1308,6 +1339,17 @@ bool fprint_bool_exp(FILE *fp, BoolExp *bool_exp) {
     Exp exp;
     exp.type = BOOL_EXP;
     exp.bool_exp = bool_exp;
+    return fprint_exp(fp, &exp);
+}
+
+bool fprint_var_exp(FILE *fp, VarExp *var_exp) {
+    if (fp == NULL || var_exp == NULL) {
+        return false;
+    }
+
+    Exp exp;
+    exp.type = VAR_EXP;
+    exp.var_exp = var_exp;
     return fprint_exp(fp, &exp);
 }
 

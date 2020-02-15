@@ -213,7 +213,7 @@ Exp *create_int_exp(const int int_value);
 
 Exp *create_bool_exp(const bool bool_value);
 
-Exp *create_var_exp(const char *src_name);
+Exp *create_var_exp(Var *var);
 
 Exp *create_plus_op_exp(Exp *exp_left, Exp *exp_right);
 
@@ -243,21 +243,25 @@ Derivation *derive(Exp *exp);
 
 void free_derivation(Derivation *derivation);
 
-bool fprint_value(FILE *fp, Value *value);
+bool fprint_value(FILE *fp, const Value *value);
 
-bool fprint_var(FILE *fp, Var *var);
+bool fprint_var(FILE *fp, const Var *var);
 
-bool fprint_env(FILE *fp, Env *exp);
+bool fprint_env(FILE *fp, const Env *exp);
 
-bool fprint_exp(FILE *fp, Exp *exp);
+bool fprint_exp(FILE *fp, const Exp *exp);
 
 bool fprint_int_exp(FILE *fp, IntExp *exp);
 
 bool fprint_bool_exp(FILE *fp, BoolExp *exp);
 
+bool fprint_var_exp(FILE *fp, VarExp *exp);
+
 bool fprint_op_exp(FILE *fp, OpExp *exp);
 
 bool fprint_if_exp(FILE *fp, IfExp *exp);
+
+bool fprint_let_exp(FILE *fp, LetExp *exp);
 
 void fprint_indent(FILE *fp, const int level);
 

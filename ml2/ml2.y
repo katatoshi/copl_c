@@ -87,8 +87,7 @@ exp_primary
     }
     | BOOL
     | VAR {
-        $$ = create_var_exp($1->name);
-        free_var($1);
+        $$ = create_var_exp($1);
     }
     | LP exp RP {
         $$ = $2;

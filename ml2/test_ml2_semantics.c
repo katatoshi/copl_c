@@ -29,7 +29,7 @@ void test1(void) {
 }
 
 void test2(void) {
-    Exp *exp1 = create_var_exp("x");
+    Exp *exp1 = create_var_exp(create_var("x"));
     Var *var1 = create_var("x");
     Value *value1 = create_int_value(3);
     Var *var2 = create_var("y");
@@ -55,7 +55,7 @@ void test3(void) {
             create_int_exp(2)
         ),
         create_times_op_exp(
-            create_var_exp("x"),
+            create_var_exp(create_var("x")),
             create_int_exp(4)
         )
     );
@@ -77,11 +77,11 @@ void test4(void) {
             create_var("y"),
             create_times_op_exp(
                 create_int_exp(4),
-                create_var_exp("x")
+                create_var_exp(create_var("x"))
             ),
             create_plus_op_exp(
-                create_var_exp("x"),
-                create_var_exp("y")
+                create_var_exp(create_var("x")),
+                create_var_exp(create_var("y"))
             )
         )
     );
@@ -100,12 +100,12 @@ void test5(void) {
             create_var("y"),
             create_int_exp(4),
             create_if_exp(
-                create_var_exp("x"),
+                create_var_exp(create_var("x")),
                 create_times_op_exp(
-                    create_var_exp("y"),
+                    create_var_exp(create_var("y")),
                     create_int_exp(2)
                 ),
-                create_var_exp("y")
+                create_var_exp(create_var("y"))
             )
         )
     );
@@ -121,12 +121,12 @@ void test5(void) {
             create_var("y"),
             create_int_exp(4),
             create_if_exp(
-                create_var_exp("x"),
+                create_var_exp(create_var("x")),
                 create_plus_op_exp(
-                    create_var_exp("y"),
+                    create_var_exp(create_var("y")),
                     create_int_exp(2)
                 ),
-                create_var_exp("y")
+                create_var_exp(create_var("y"))
             )
         )
     );
@@ -142,12 +142,12 @@ void test5(void) {
             create_var("y"),
             create_int_exp(4),
             create_if_exp(
-                create_var_exp("x"),
+                create_var_exp(create_var("x")),
                 create_times_op_exp(
-                    create_var_exp("y"),
+                    create_var_exp(create_var("y")),
                     create_int_exp(2)
                 ),
-                create_var_exp("y")
+                create_var_exp(create_var("y"))
             )
         )
     );
