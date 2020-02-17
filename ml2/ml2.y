@@ -42,8 +42,32 @@ exp
     | IF exp THEN exp ELSE exp {
         $$ = create_if_exp($2, $4, $6);
     }
+    | exp_lt LT IF exp THEN exp ELSE exp {
+        $$ = create_lt_op_exp($1, create_if_exp($4, $6, $8));
+    }
+    | exp_plus PLUS IF exp THEN exp ELSE exp {
+        $$ = create_plus_op_exp($1, create_if_exp($4, $6, $8));
+    }
+    | exp_plus MINUS IF exp THEN exp ELSE exp {
+        $$ = create_minus_op_exp($1, create_if_exp($4, $6, $8));
+    }
+    | exp_times TIMES IF exp THEN exp ELSE exp {
+        $$ = create_times_op_exp($1, create_if_exp($4, $6, $8));
+    }
     | LET VAR EQ exp IN exp {
         $$ = create_let_exp($2, $4, $6);
+    }
+    | exp_lt LT LET VAR EQ exp IN exp {
+        $$ = create_lt_op_exp($1, create_let_exp($4, $6, $8));
+    }
+    | exp_plus PLUS LET VAR EQ exp IN exp {
+        $$ = create_plus_op_exp($1, create_let_exp($4, $6, $8));
+    }
+    | exp_plus MINUS LET VAR EQ exp IN exp {
+        $$ = create_minus_op_exp($1, create_let_exp($4, $6, $8));
+    }
+    | exp_times TIMES LET VAR EQ exp IN exp {
+        $$ = create_times_op_exp($1, create_let_exp($4, $6, $8));
     }
     ;
 exp_lt

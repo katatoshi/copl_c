@@ -53,6 +53,18 @@ exp
     {
         $$ = create_if_exp($2, $4, $6);
     }
+    | exp_lt LT IF exp THEN exp ELSE exp {
+        $$ = create_lt_op_exp($1, create_if_exp($4, $6, $8));
+    }
+    | exp_plus PLUS IF exp THEN exp ELSE exp {
+        $$ = create_plus_op_exp($1, create_if_exp($4, $6, $8));
+    }
+    | exp_plus MINUS IF exp THEN exp ELSE exp {
+        $$ = create_minus_op_exp($1, create_if_exp($4, $6, $8));
+    }
+    | exp_times TIMES IF exp THEN exp ELSE exp {
+        $$ = create_times_op_exp($1, create_if_exp($4, $6, $8));
+    }
     ;
 exp_lt
     : exp_plus
