@@ -133,6 +133,7 @@ typedef enum {
 
 typedef struct {
     DerivationType type;
+    Env *env;
     union {
         IntDerivation *int_derivation;
         BoolDerivation *bool_derivation;
@@ -240,6 +241,8 @@ bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value
 Value *create_value_from_derivation(Derivation *derivation);
 
 Derivation *derive(Exp *exp);
+
+Derivation *derive_impl(const Env *env, Exp *exp);
 
 void free_derivation(Derivation *derivation);
 

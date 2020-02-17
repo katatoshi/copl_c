@@ -17,14 +17,28 @@ void test1(void) {
             create_int_exp(6)
         )
     );
-    Env env = { .var_binding = NULL };
-    Value *value1 = evaluate_impl(&env, exp1);
+
+    VarBinding *var_binding_1 = malloc(sizeof(VarBinding));
+    var_binding_1->var = create_var("x");
+    var_binding_1->value = create_int_value(2);
+    var_binding_1->next = NULL;
+
+    VarBinding *var_binding_2 = malloc(sizeof(VarBinding));
+    var_binding_2->var = create_var("hoge");
+    var_binding_2->value = create_bool_value(true);
+    var_binding_2->next = var_binding_1;
+
+    Env *env = malloc(sizeof(Env));
+    env->var_binding = var_binding_2;
+
+    Value *value1 = evaluate_impl(env, exp1);
     printf("%s\n", value1->bool_value ? "true" : "false");
     free_value(value1);
 
-    Derivation *derivation1 = derive(exp1);
+    Derivation *derivation1 = derive_impl(env, exp1);
     fprint_derivation(stdout, derivation1);
     free_derivation(derivation1);
+    free_env(env);
     free_exp(exp1);
 }
 

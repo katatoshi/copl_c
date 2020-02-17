@@ -830,6 +830,15 @@ Derivation *derive(Exp *exp) {
         return NULL;
     }
 
+    Env env = { .var_binding = NULL };
+    return derive_impl(&env, exp);
+}
+
+Derivation *derive_impl(const Env *env, Exp *exp) {
+    if (exp == NULL) {
+        return NULL;
+    }
+
     switch (exp->type) {
         case INT_EXP: {
             if (exp->int_exp == NULL) {
@@ -842,6 +851,7 @@ Derivation *derive(Exp *exp) {
 
             Derivation *derivation = malloc(sizeof(Derivation));
             derivation->type = INT_DERIVATION;
+            derivation->env = copy_env(env);
             derivation->int_derivation = int_derivation;
             return derivation;
         }
@@ -856,6 +866,7 @@ Derivation *derive(Exp *exp) {
 
             Derivation *derivation = malloc(sizeof(Derivation));
             derivation->type = BOOL_DERIVATION;
+            derivation->env = copy_env(env);
             derivation->bool_derivation = bool_derivation;
             return derivation;
         }
@@ -874,7 +885,7 @@ Derivation *derive(Exp *exp) {
                 return NULL;
             }
 
-            Derivation *premise_left = derive(exp_left);
+            Derivation *premise_left = derive_impl(env, exp_left);
             if (premise_left == NULL) {
                 return NULL;
             }
@@ -885,7 +896,7 @@ Derivation *derive(Exp *exp) {
                 return NULL;
             }
 
-            Derivation *premise_right = derive(exp_right);
+            Derivation *premise_right = derive_impl(env, exp_right);
             if (premise_right == NULL) {
                 free_derivation(premise_left);
                 return NULL;
@@ -908,6 +919,7 @@ Derivation *derive(Exp *exp) {
 
                     Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = PLUS_DERIVATION;
+                    derivation->env = copy_env(env);
                     derivation->plus_derivation = plus_derivation;
                     return derivation;
                 }
@@ -920,6 +932,7 @@ Derivation *derive(Exp *exp) {
 
                     Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = MINUS_DERIVATION;
+                    derivation->env = copy_env(env);
                     derivation->minus_derivation = minus_derivation;
                     return derivation;
                 }
@@ -932,6 +945,7 @@ Derivation *derive(Exp *exp) {
 
                     Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = TIMES_DERIVATION;
+                    derivation->env = copy_env(env);
                     derivation->times_derivation = times_derivation;
                     return derivation;
                 }
@@ -944,6 +958,7 @@ Derivation *derive(Exp *exp) {
 
                     Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = LT_DERIVATION;
+                    derivation->env = copy_env(env);
                     derivation->lt_derivation = lt_derivation;
                     return derivation;
                 }
@@ -962,7 +977,7 @@ Derivation *derive(Exp *exp) {
                 return NULL;
             }
 
-            Derivation *premise_cond = derive(exp_cond);
+            Derivation *premise_cond = derive_impl(env, exp_cond);
             if (premise_cond == NULL) {
                 return NULL;
             }
@@ -980,7 +995,7 @@ Derivation *derive(Exp *exp) {
                     return NULL;
                 }
 
-                Derivation *premise_true = derive(exp_true);
+                Derivation *premise_true = derive_impl(env, exp_true);
                 if (premise_true == NULL) {
                     free_derivation(premise_cond);
                     return NULL;
@@ -1001,6 +1016,7 @@ Derivation *derive(Exp *exp) {
 
                 Derivation *derivation = malloc(sizeof(Derivation));
                 derivation->type = IF_TRUE_DERIVATION;
+                derivation->env = copy_env(env);
                 derivation->if_true_derivation = if_true_derivation;
                 return derivation;
             } else {
@@ -1010,7 +1026,7 @@ Derivation *derive(Exp *exp) {
                     return NULL;
                 }
 
-                Derivation *premise_false = derive(exp_false);
+                Derivation *premise_false = derive_impl(env, exp_false);
                 if (premise_false == NULL) {
                     free_derivation(premise_cond);
                     return NULL;
@@ -1031,6 +1047,7 @@ Derivation *derive(Exp *exp) {
 
                 Derivation *derivation = malloc(sizeof(Derivation));
                 derivation->type = IF_FALSE_DERIVATION;
+                derivation->env = copy_env(env);
                 derivation->if_false_derivation = if_false_derivation;
                 return derivation;
             }
@@ -1047,17 +1064,20 @@ void free_derivation(Derivation *derivation) {
 
     switch (derivation->type) {
         case INT_DERIVATION: {
+            free_env(derivation->env);
             free(derivation->int_derivation);
             free(derivation);
             return;
         }
         case BOOL_DERIVATION: {
+            free_env(derivation->env);
             free(derivation->int_derivation);
             free(derivation);
             return;
         }
         case PLUS_DERIVATION: {
             if (derivation->plus_derivation == NULL) {
+                free_env(derivation->env);
                 free(derivation);
                 return;
             }
@@ -1065,11 +1085,13 @@ void free_derivation(Derivation *derivation) {
             free_derivation(derivation->plus_derivation->premise_left);
             free_derivation(derivation->plus_derivation->premise_right);
             free(derivation->plus_derivation);
+            free_env(derivation->env);
             free(derivation);
             return;
         }
         case MINUS_DERIVATION: {
             if (derivation->minus_derivation == NULL) {
+                free_env(derivation->env);
                 free(derivation);
                 return;
             }
@@ -1077,11 +1099,13 @@ void free_derivation(Derivation *derivation) {
             free_derivation(derivation->minus_derivation->premise_left);
             free_derivation(derivation->minus_derivation->premise_right);
             free(derivation->minus_derivation);
+            free_env(derivation->env);
             free(derivation);
             return;
         }
         case TIMES_DERIVATION: {
             if (derivation->times_derivation == NULL) {
+                free_env(derivation->env);
                 free(derivation);
                 return;
             }
@@ -1089,11 +1113,13 @@ void free_derivation(Derivation *derivation) {
             free_derivation(derivation->times_derivation->premise_left);
             free_derivation(derivation->times_derivation->premise_right);
             free(derivation->times_derivation);
+            free_env(derivation->env);
             free(derivation);
             return;
         }
         case LT_DERIVATION: {
             if (derivation->lt_derivation == NULL) {
+                free_env(derivation->env);
                 free(derivation);
                 return;
             }
@@ -1101,11 +1127,13 @@ void free_derivation(Derivation *derivation) {
             free_derivation(derivation->lt_derivation->premise_left);
             free_derivation(derivation->lt_derivation->premise_right);
             free(derivation->lt_derivation);
+            free_env(derivation->env);
             free(derivation);
             return;
         }
         case IF_TRUE_DERIVATION: {
             if (derivation->if_true_derivation == NULL) {
+                free_env(derivation->env);
                 free(derivation);
                 return;
             }
@@ -1114,11 +1142,13 @@ void free_derivation(Derivation *derivation) {
             free_derivation(derivation->if_true_derivation->premise_true);
             free_value(derivation->if_true_derivation->value);
             free(derivation->if_true_derivation);
+            free_env(derivation->env);
             free(derivation);
             return;
         }
         case IF_FALSE_DERIVATION: {
             if (derivation->if_false_derivation == NULL) {
+                free_env(derivation->env);
                 free(derivation);
                 return;
             }
@@ -1127,6 +1157,7 @@ void free_derivation(Derivation *derivation) {
             free_derivation(derivation->if_false_derivation->premise_false);
             free_value(derivation->if_false_derivation->value);
             free(derivation->if_false_derivation);
+            free_env(derivation->env);
             free(derivation);
             return;
         }
@@ -1391,6 +1422,14 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
             if (!fprint_int_exp(fp, derivation->int_derivation->int_exp)) {
                 return false;
             }
@@ -1406,6 +1445,14 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
             if (!fprint_bool_exp(fp, derivation->bool_derivation->bool_exp)) {
                 return false;
             }
@@ -1420,6 +1467,14 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             if (derivation->plus_derivation == NULL) {
                 return false;
             }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
 
             if (!fprint_op_exp(fp, derivation->plus_derivation->op_exp)) {
                 return false;
@@ -1466,6 +1521,14 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
             if (!fprint_op_exp(fp, derivation->minus_derivation->op_exp)) {
                 return false;
             }
@@ -1511,6 +1574,14 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
             if (!fprint_op_exp(fp, derivation->times_derivation->op_exp)) {
                 return false;
             }
@@ -1555,6 +1626,14 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             if (derivation->lt_derivation == NULL) {
                 return false;
             }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
 
             if (!fprint_op_exp(fp, derivation->lt_derivation->op_exp)) {
                 return false;
@@ -1602,6 +1681,14 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
             if (!fprint_if_exp(fp, if_true_derivation->if_exp)) {
                 return false;
             }
@@ -1634,6 +1721,14 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             if (if_false_derivation == NULL) {
                 return false;
             }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
 
             if (!fprint_if_exp(fp, if_false_derivation->if_exp)) {
                 return false;
