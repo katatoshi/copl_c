@@ -11,8 +11,6 @@ extern int yylex();
 extern int yyerror(const char*);
 
 Exp *parsed_exp;
-
-bool is_eof;
 %}
 %union {
     Var *var;
@@ -20,28 +18,18 @@ bool is_eof;
 }
 %token <var> VAR
 %token <exp> INT BOOL
-%token PLUS MINUS TIMES LT IF THEN ELSE LET EQ IN LP RP LF QUIT END_OF_FILE
+%token PLUS MINUS TIMES LT IF THEN ELSE LET EQ IN LP RP END_OF_EXP END_OF_FILE
 %type <exp> exp exp_lt exp_plus exp_times exp_primary
 %%
 line
-    : exp LF {
-        is_eof = false;
+    : exp END_OF_EXP {
         if (parsed_exp != NULL) {
             free_exp(parsed_exp);
         }
         parsed_exp = $1;
         return 0;
     }
-    | LF {
-        is_eof = false;
-        if (parsed_exp != NULL) {
-            free_exp(parsed_exp);
-        }
-        parsed_exp = NULL;
-        return 0;
-    }
     | END_OF_FILE {
-        is_eof = true;
         if (parsed_exp != NULL) {
             free_exp(parsed_exp);
         }

@@ -44,8 +44,11 @@ int yywrap(void) {
 }
 "(" return LP;
 ")" return RP;
+";;\n" return END_OF_EXP;
+"\n" {
+    printf("# ");
+}
 [\t ] ;
-"\n" return LF;
 <<EOF>> return END_OF_FILE;
 . return yytext[0];
 %%
