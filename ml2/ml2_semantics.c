@@ -1174,8 +1174,6 @@ bool fprint_env(FILE *fp, const Env *env) {
         return false;
     }
 
-    fprintf(fp, "");
-
     VarBinding *var_binding = env->var_binding;
     while (var_binding != NULL) {
         if (var_binding->var == NULL || var_binding->value == NULL) {
