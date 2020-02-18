@@ -46,7 +46,7 @@ int yywrap(void) {
 ")" return RP;
 ";;\n" return END_OF_EXP;
 "\n" {
-    printf("# ");
+    printf("  ");
 }
 [\t ] ;
 <<EOF>> return END_OF_FILE;
