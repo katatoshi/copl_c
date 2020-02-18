@@ -131,6 +131,26 @@ Env *copy_env(const Env *env) {
     return env_new;
 }
 
+Env *create_poped_env(const Env *env) {
+    if (env == NULL) {
+        return NULL;
+    }
+
+    if (env->var_binding == NULL) {
+        return NULL;
+    }
+
+    Env *env_new = copy_env(env);
+    VarBinding *var_binding_temp = env_new->var_binding;
+    env_new->var_binding = var_binding_temp->next;
+
+    free_var(var_binding_temp->var);
+    free_value(var_binding_temp->value);
+    free(var_binding_temp);
+
+    return env_new;
+}
+
 Env *create_appended_env(const Env *env, const Var *var, const Value *value) {
     if (env == NULL || var == NULL || value == NULL) {
         return NULL;
@@ -588,6 +608,40 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value) {
             *int_value = derivation->int_derivation->int_value;
             return true;
         }
+        case VAR_1_DERIVATION: {
+            if (derivation->var_1_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->var_1_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != INT_VALUE) {
+                return false;
+            }
+
+            *int_value = value->int_value;
+            return true;
+        }
+        case VAR_2_DERIVATION: {
+            if (derivation->var_2_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->var_2_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != INT_VALUE) {
+                return false;
+            }
+
+            *int_value = value->int_value;
+            return true;
+        }
         case PLUS_DERIVATION: {
             if (derivation->plus_derivation == NULL) {
                 return false;
@@ -646,6 +700,23 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value) {
             *int_value = value->int_value;
             return true;
         }
+        case LET_DERIVATION: {
+            if (derivation->let_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->let_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != INT_VALUE) {
+                return false;
+            }
+
+            *int_value = value->int_value;
+            return true;
+        }
         default:
             return false;
     }
@@ -663,6 +734,40 @@ bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value
             }
 
             *bool_value = derivation->bool_derivation->bool_value;
+            return true;
+        }
+        case VAR_1_DERIVATION: {
+            if (derivation->var_1_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->var_1_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != BOOL_VALUE) {
+                return false;
+            }
+
+            *bool_value = value->bool_value;
+            return true;
+        }
+        case VAR_2_DERIVATION: {
+            if (derivation->var_2_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->var_2_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != BOOL_VALUE) {
+                return false;
+            }
+
+            *bool_value = value->bool_value;
             return true;
         }
         case LT_DERIVATION: {
@@ -707,6 +812,23 @@ bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value
             *bool_value = value->bool_value;
             return true;
         }
+        case LET_DERIVATION: {
+            if (derivation->let_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->let_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != BOOL_VALUE) {
+                return false;
+            }
+
+            *bool_value = value->bool_value;
+            return true;
+        }
         default:
             return false;
     }
@@ -723,102 +845,77 @@ Value *create_value_from_derivation(Derivation *derivation) {
                 return NULL;
             }
 
-            Value *value = malloc(sizeof(Value));
-            value->type = INT_VALUE;
-            value->int_value = derivation->int_derivation->int_value;
-            return value;
+            return create_int_value(derivation->int_derivation->int_value);
         }
         case BOOL_DERIVATION: {
             if (derivation->bool_derivation == NULL) {
                 return NULL;
             }
 
-            Value *value = malloc(sizeof(Value));
-            value->type = BOOL_VALUE;
-            value->bool_value = derivation->bool_derivation->bool_value;
-            return value;
+            return create_bool_value(derivation->bool_derivation->bool_value);
+        }
+        case VAR_1_DERIVATION: {
+            if (derivation->var_1_derivation == NULL) {
+                return NULL;
+            }
+
+            return copy_value(derivation->var_1_derivation->value);
+        }
+        case VAR_2_DERIVATION: {
+            if (derivation->var_2_derivation == NULL) {
+                return NULL;
+            }
+
+            return copy_value(derivation->var_2_derivation->value);
         }
         case PLUS_DERIVATION: {
             if (derivation->plus_derivation == NULL) {
                 return NULL;
             }
 
-            Value *value = malloc(sizeof(Value));
-            value->type = INT_VALUE;
-            value->int_value = derivation->plus_derivation->int_value;
-            return value;
+            return create_int_value(derivation->plus_derivation->int_value);
         }
         case MINUS_DERIVATION: {
             if (derivation->minus_derivation == NULL) {
                 return NULL;
             }
 
-            Value *value = malloc(sizeof(Value));
-            value->type = INT_VALUE;
-            value->int_value = derivation->minus_derivation->int_value;
-            return value;
+            return create_int_value(derivation->minus_derivation->int_value);
         }
         case TIMES_DERIVATION: {
             if (derivation->times_derivation == NULL) {
                 return NULL;
             }
 
-            Value *value = malloc(sizeof(Value));
-            value->type = INT_VALUE;
-            value->int_value = derivation->times_derivation->int_value;
-            return value;
+            return create_int_value(derivation->times_derivation->int_value);
+        }
+        case LT_DERIVATION: {
+            if (derivation->lt_derivation == NULL) {
+                return NULL;
+            }
+
+            return create_bool_value(derivation->lt_derivation->bool_value);
         }
         case IF_TRUE_DERIVATION: {
             if (derivation->if_true_derivation == NULL) {
-                return false;
+                return NULL;
             }
 
-            Value *value_src = derivation->if_true_derivation->value;
-            if (value_src == NULL) {
-                return false;
-            }
-
-            Value *value = malloc(sizeof(Value));
-            value->type = value_src->type;
-            switch (value_src->type) {
-                case INT_VALUE: {
-                    value->int_value = value_src->int_value;
-                    break;
-                }
-                case BOOL_VALUE: {
-                    value->bool_value = value_src->bool_value;
-                    break;
-                }
-                default:
-                    return NULL;
-            }
-            return value;
+            return copy_value(derivation->if_true_derivation->value);
         }
         case IF_FALSE_DERIVATION: {
             if (derivation->if_false_derivation == NULL) {
-                return false;
+                return NULL;
             }
 
-            Value *value_src = derivation->if_false_derivation->value;
-            if (value_src == NULL) {
-                return false;
+            return copy_value(derivation->if_false_derivation->value);
+        }
+        case LET_DERIVATION: {
+            if (derivation->let_derivation == NULL) {
+                return NULL;
             }
 
-            Value *value = malloc(sizeof(Value));
-            value->type = value_src->type;
-            switch (value_src->type) {
-                case INT_VALUE: {
-                    value->int_value = value_src->int_value;
-                    break;
-                }
-                case BOOL_VALUE: {
-                    value->bool_value = value_src->bool_value;
-                    break;
-                }
-                default:
-                    return NULL;
-            }
-            return value;
+            return copy_value(derivation->let_derivation->value);
         }
         default:
             return NULL;
@@ -869,6 +966,58 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
             derivation->env = copy_env(env);
             derivation->bool_derivation = bool_derivation;
             return derivation;
+        }
+        case VAR_EXP: {
+            if (exp->var_exp == NULL) {
+                return NULL;
+            }
+
+            if (env->var_binding == NULL) {
+                return NULL;
+            }
+
+            if (is_same_var(env->var_binding->var, exp->var_exp->var)) {
+                Var1Derivation *var_1_derivation = malloc(sizeof(Var1Derivation));
+                var_1_derivation->var_exp = exp->var_exp;
+                var_1_derivation->value = copy_value(env->var_binding->value);
+
+                Derivation *derivation = malloc(sizeof(Derivation));
+                derivation->type = VAR_1_DERIVATION;
+                derivation->env = copy_env(env);
+                derivation->var_1_derivation = var_1_derivation;
+                return derivation;
+            } else {
+                Env *env_poped = create_poped_env(env);
+                if (env_poped == NULL) {
+                    return NULL;
+                }
+
+                Derivation *premise = derive_impl(env_poped, exp);
+                if (premise == NULL) {
+                    free_env(env_poped);
+                    return NULL;
+                }
+
+                Value *value = create_value_from_derivation(premise);
+                if (value == NULL) {
+                    free_derivation(premise);
+                    free_env(env_poped);
+                    return NULL;
+                }
+
+                free_env(env_poped);
+
+                Var2Derivation *var_2_derivation = malloc(sizeof(Var2Derivation));
+                var_2_derivation->premise = premise;
+                var_2_derivation->var_exp = exp->var_exp;
+                var_2_derivation->value = value;
+
+                Derivation *derivation = malloc(sizeof(Derivation));
+                derivation->type = VAR_2_DERIVATION;
+                derivation->env = copy_env(env);
+                derivation->var_2_derivation = var_2_derivation;
+                return derivation;
+            }
         }
         case OP_EXP: {
             if (exp->op_exp == NULL) {
@@ -1052,6 +1201,74 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
                 return derivation;
             }
         }
+        case LET_EXP: {
+            if (exp->let_exp == NULL) {
+                return NULL;
+            }
+
+            if (exp->let_exp->var == NULL) {
+                return NULL;
+            }
+
+            if (exp->let_exp->exp_1 == NULL) {
+                return NULL;
+            }
+
+            if (exp->let_exp->exp_2 == NULL) {
+                return NULL;
+            }
+
+            Derivation *premise_1 = derive_impl(env, exp->let_exp->exp_1);
+            if (premise_1 == NULL) {
+                return NULL;
+            }
+
+            Value *value_1 = create_value_from_derivation(premise_1);
+            if (value_1 == NULL) {
+                free_derivation(premise_1);
+                return NULL;
+            }
+
+            Env *env_new = create_appended_env(env, exp->let_exp->var, value_1);
+            if (env_new == NULL) {
+                free_value(value_1);
+                free_derivation(premise_1);
+                return NULL;
+            }
+
+            Derivation *premise_2 = derive_impl(env_new, exp->let_exp->exp_2);
+            if (premise_2 == NULL) {
+                free_env(env_new);
+                free_value(value_1);
+                free_derivation(premise_1);
+                return NULL;
+            }
+
+            Value *value_2 = create_value_from_derivation(premise_2);
+            if (value_2 == NULL) {
+                free_derivation(premise_2);
+                free_env(env_new);
+                free_value(value_1);
+                free_derivation(premise_1);
+                return NULL;
+            }
+
+            LetDerivation *let_derivation = malloc(sizeof(LetDerivation));
+            let_derivation->premise_1 = premise_1;
+            let_derivation->premise_2 = premise_2;
+            let_derivation->let_exp = exp->let_exp;
+            let_derivation->value = value_2;
+
+            Derivation *derivation = malloc(sizeof(Derivation));
+            derivation->type = LET_DERIVATION;
+            derivation->env = copy_env(env);
+            derivation->let_derivation = let_derivation;
+
+            free_env(env_new);
+            free_value(value_1);
+
+            return derivation;
+        }
         default:
             return NULL;
     }
@@ -1205,17 +1422,33 @@ bool fprint_env(FILE *fp, const Env *env) {
         return false;
     }
 
-    VarBinding *var_binding = env->var_binding;
+    Env *env_reverse = copy_env(env);
+    VarBinding *var_binding_prev = NULL;
+    VarBinding *var_binding_current = env_reverse->var_binding;
+    while (var_binding_current != NULL) {
+        VarBinding *var_binding_next = var_binding_current->next;
+
+        var_binding_current->next = var_binding_prev;
+
+        var_binding_prev = var_binding_current;
+        var_binding_current = var_binding_next;
+    }
+    env_reverse->var_binding = var_binding_prev;
+
+    VarBinding *var_binding = env_reverse->var_binding;
     while (var_binding != NULL) {
         if (var_binding->var == NULL || var_binding->value == NULL) {
+            free_env(env_reverse);
             return false;
         }
 
         if (!fprint_var(fp, var_binding->var)) {
+            free_env(env_reverse);
             return false;
         }
         fprintf(fp, " = ");
         if (!fprint_value(fp, var_binding->value)) {
+            free_env(env_reverse);
             return false;
         }
         if (var_binding->next != NULL) {
@@ -1223,6 +1456,8 @@ bool fprint_env(FILE *fp, const Env *env) {
         }
         var_binding = var_binding->next;
     }
+
+    free_env(env_reverse);
 
     return true;
 }
@@ -1404,6 +1639,17 @@ bool fprint_if_exp(FILE *fp, IfExp *if_exp) {
     return fprint_exp(fp, &exp);
 }
 
+bool fprint_let_exp(FILE *fp, LetExp *let_exp) {
+    if (fp == NULL || let_exp == NULL) {
+        return false;
+    }
+
+    Exp exp;
+    exp.type = LET_EXP;
+    exp.let_exp = let_exp;
+    return fprint_exp(fp, &exp);
+}
+
 void fprint_indent(FILE *fp, const int level) {
     for (int i = 0; i < level; i++) {
         fprintf(fp, "  ");
@@ -1458,6 +1704,80 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             }
 
             fprintf(fp, " evalto %s by E-Bool {}", derivation->bool_derivation->bool_value ? "true" : "false");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case VAR_1_DERIVATION: {
+            if (derivation->var_1_derivation == NULL) {
+                return false;
+            }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
+            if (!fprint_var_exp(fp, derivation->var_1_derivation->var_exp)) {
+                return false;
+            }
+
+            Value *value = derivation->var_1_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            fprintf(fp, " evalto ");
+            if (!fprint_value(fp, value)) {
+                return false;
+            }
+            fprintf(fp, " by E-Var1 {}");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case VAR_2_DERIVATION: {
+            if (derivation->var_2_derivation == NULL) {
+                return false;
+            }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
+            if (!fprint_var_exp(fp, derivation->var_2_derivation->var_exp)) {
+                return false;
+            }
+
+            Value *value = derivation->var_2_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            fprintf(fp, " evalto ");
+            if (!fprint_value(fp, value)) {
+                return false;
+            }
+            fprintf(fp, " by E-Var2 {\n");
+            Derivation *premise = derivation->var_2_derivation->premise;
+            if (premise == NULL) {
+                return false;
+            }
+            if (!fprint_derivation_impl(fp, premise, level + 1)) {
+                return false;
+            }
+            fprintf(fp, "\n");
+            fprint_indent(fp, level);
+            fprintf(fp, "}");
             if (level == 0) {
                 fprintf(fp, "\n");
             }
@@ -1699,7 +2019,9 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             }
 
             fprintf(fp, " evalto ");
-            fprint_value(fp, value);
+            if (!fprint_value(fp, value)) {
+                return false;
+            }
             fprintf(fp, " by E-IfT {\n");
             if (!fprint_derivation_impl(fp, if_true_derivation->premise_cond, level + 1)) {
                 return false;
@@ -1740,13 +2062,58 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             }
 
             fprintf(fp, " evalto ");
-            fprint_value(fp, value);
+            if (!fprint_value(fp, value)) {
+                return false;
+            }
             fprintf(fp, " by E-IfF {\n");
             if (!fprint_derivation_impl(fp, if_false_derivation->premise_cond, level + 1)) {
                 return false;
             }
             fprintf(fp, ";\n");
             if (!fprint_derivation_impl(fp, if_false_derivation->premise_false, level + 1)) {
+                return false;
+            }
+            fprintf(fp, "\n");
+            fprint_indent(fp, level);
+            fprintf(fp, "}");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case LET_DERIVATION: {
+            LetDerivation *let_derivation = derivation->let_derivation;
+            if (let_derivation == NULL) {
+                return false;
+            }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
+            if (!fprint_let_exp(fp, let_derivation->let_exp)) {
+                return false;
+            }
+
+            Value *value = let_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            fprintf(fp, " evalto ");
+            if (!fprint_value(fp, value)) {
+                return false;
+            }
+            fprintf(fp, " by E-Let {\n");
+            if (!fprint_derivation_impl(fp, let_derivation->premise_1, level + 1)) {
+                return false;
+            }
+            fprintf(fp, ";\n");
+            if (!fprint_derivation_impl(fp, let_derivation->premise_2, level + 1)) {
                 return false;
             }
             fprintf(fp, "\n");

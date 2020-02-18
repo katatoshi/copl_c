@@ -108,6 +108,10 @@ typedef struct {
     bool bool_value;
 } BoolDerivation;
 
+typedef struct Var1DerivationTag Var1Derivation;
+
+typedef struct Var2DerivationTag Var2Derivation;
+
 typedef struct PlusDerivationTag PlusDerivation;
 
 typedef struct MinusDerivationTag MinusDerivation;
@@ -120,15 +124,20 @@ typedef struct IfTrueDerivationTag IfTrueDerivation;
 
 typedef struct IfFalseDerivationTag IfFalseDerivation;
 
+typedef struct LetDerivationTag LetDerivation;
+
 typedef enum {
     INT_DERIVATION,
     BOOL_DERIVATION,
+    VAR_1_DERIVATION,
+    VAR_2_DERIVATION,
     PLUS_DERIVATION,
     MINUS_DERIVATION,
     TIMES_DERIVATION,
     LT_DERIVATION,
     IF_TRUE_DERIVATION,
-    IF_FALSE_DERIVATION
+    IF_FALSE_DERIVATION,
+    LET_DERIVATION
 } DerivationType;
 
 typedef struct {
@@ -137,14 +146,28 @@ typedef struct {
     union {
         IntDerivation *int_derivation;
         BoolDerivation *bool_derivation;
+        Var1Derivation *var_1_derivation;
+        Var2Derivation *var_2_derivation;
         PlusDerivation *plus_derivation;
         MinusDerivation *minus_derivation;
         TimesDerivation *times_derivation;
         LtDerivation *lt_derivation;
         IfTrueDerivation *if_true_derivation;
         IfFalseDerivation *if_false_derivation;
+        LetDerivation *let_derivation;
     };
 } Derivation;
+
+struct Var1DerivationTag {
+    VarExp *var_exp;
+    Value *value;
+};
+
+struct Var2DerivationTag {
+    Derivation *premise;
+    VarExp *var_exp;
+    Value *value;
+};
 
 struct PlusDerivationTag {
     Derivation *premise_left;
@@ -188,6 +211,13 @@ struct IfFalseDerivationTag {
     Value *value;
 };
 
+struct LetDerivationTag {
+    Derivation *premise_1;
+    Derivation *premise_2;
+    LetExp *let_exp;
+    Value *value;
+};
+
 Var *create_var(const char *src_name);
 
 Var *copy_var(const Var *var);
@@ -205,6 +235,8 @@ Value *copy_value(const Value *value);
 void free_value(Value *value);
 
 Env *copy_env(const Env *env);
+
+Env *create_poped_env(const Env *env);
 
 Env *create_appended_env(const Env *env, const Var *var, const Value *value);
 

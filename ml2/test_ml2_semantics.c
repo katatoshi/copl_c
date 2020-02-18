@@ -126,6 +126,10 @@ void test5(void) {
     Value *value1 = evaluate(exp1);
     printf("%d\n", value1->int_value);
     free_value(value1);
+
+    Derivation *derivation1 = derive(exp1);
+    fprint_derivation(stdout, derivation1);
+    free_derivation(derivation1);
     free_exp(exp1);
 
     Exp *exp2 = create_let_exp(
@@ -147,6 +151,10 @@ void test5(void) {
     Value *value2 = evaluate(exp2);
     printf("%d\n", value2->int_value);
     free_value(value2);
+
+    Derivation *derivation2 = derive(exp2);
+    fprint_derivation(stdout, derivation2);
+    free_derivation(derivation2);
     free_exp(exp2);
 
     Exp *exp3 = create_let_exp(
@@ -168,6 +176,10 @@ void test5(void) {
     Value *value3 = evaluate(exp3);
     printf("%d\n", value3->int_value);
     free_value(value3);
+
+    Derivation *derivation3 = derive(exp3);
+    fprint_derivation(stdout, derivation3);
+    free_derivation(derivation3);
     free_exp(exp3);
 }
 
