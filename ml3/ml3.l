@@ -20,6 +20,8 @@ int yywrap(void) {
 "let" return LET;
 "=" return EQ;
 "in" return IN;
+"fun" return FUN;
+"->" return TO;
 [0-9]+ {
     int value;
     sscanf(yytext, "%d", &value);
@@ -46,7 +48,7 @@ int yywrap(void) {
 ")" return RP;
 ";;\n" return END_OF_EXP;
 "\n" {
-    printf("# ");
+    printf("  ");
 }
 [\t ] ;
 <<EOF>> return END_OF_FILE;

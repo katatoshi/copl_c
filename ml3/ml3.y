@@ -18,8 +18,8 @@ Exp *parsed_exp;
 }
 %token <var> VAR
 %token <exp> INT BOOL
-%token PLUS MINUS TIMES LT IF THEN ELSE LET EQ IN LP RP END_OF_EXP END_OF_FILE
-%type <exp> exp exp_lt exp_plus exp_times exp_primary
+%token PLUS MINUS TIMES LT IF THEN ELSE LET EQ IN FUN TO LP RP END_OF_EXP END_OF_FILE
+%type <exp> exp exp_lt exp_plus exp_times exp_app exp_primary
 %%
 line
     : exp END_OF_EXP {
@@ -69,6 +69,21 @@ exp
     | exp_times TIMES LET VAR EQ exp IN exp {
         $$ = create_times_op_exp($1, create_let_exp($4, $6, $8));
     }
+    | FUN VAR TO exp {
+        $$ = create_fun_exp($2, $4);
+    }
+    | exp_lt LT FUN VAR TO exp {
+        $$ = create_lt_op_exp($1, create_fun_exp($4, $6));
+    }
+    | exp_plus PLUS FUN VAR TO exp {
+        $$ = create_plus_op_exp($1, create_fun_exp($4, $6));
+    }
+    | exp_plus MINUS FUN VAR TO exp {
+        $$ = create_minus_op_exp($1, create_fun_exp($4, $6));
+    }
+    | exp_times TIMES FUN VAR TO exp {
+        $$ = create_times_op_exp($1, create_fun_exp($4, $6));
+    }
     ;
 exp_lt
     : exp_plus
@@ -86,9 +101,24 @@ exp_plus
     }
     ;
 exp_times
-    : exp_primary
-    | exp_times TIMES exp_primary {
+    : exp_app
+    | exp_times TIMES exp_app {
         $$ = create_times_op_exp($1, $3);
+    }
+    ;
+exp_app
+    : exp_primary
+    | exp_primary INT {
+        $$ = create_app_exp($1, $2);
+    }
+    | exp_primary BOOL {
+        $$ = create_app_exp($1, $2);
+    }
+    | exp_primary VAR {
+        $$ = create_app_exp($1, create_var_exp($2));
+    }
+    | exp_primary LP exp RP {
+        $$ = create_app_exp($1, $3);
     }
     ;
 exp_primary

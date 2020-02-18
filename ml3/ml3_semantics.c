@@ -71,6 +71,22 @@ Value *create_bool_value(const bool bool_value) {
     return value;
 }
 
+Value *create_closure_value(const Env *env, const Var *var, Exp *exp_body) {
+    if (env == NULL || var == NULL || exp_body == NULL) {
+        return NULL;
+    }
+
+    ClosureValue *closure_value = malloc(sizeof(ClosureValue));
+    closure_value->env = copy_env(env);
+    closure_value->var = copy_var(var);
+    closure_value->exp_body = exp_body;
+
+    Value *value = malloc(sizeof(Value));
+    value->type = CLOSURE_VALUE;
+    value->closure_value = closure_value;
+    return value;
+}
+
 Value *copy_value(const Value *value) {
     if (value == NULL) {
         return NULL;
@@ -81,6 +97,18 @@ Value *copy_value(const Value *value) {
             return create_int_value(value->int_value);
         case BOOL_VALUE:
             return create_bool_value(value->bool_value);
+        case CLOSURE_VALUE: {
+            ClosureValue *closure_value = value->closure_value;
+            if (closure_value == NULL) {
+                return NULL;
+            }
+
+            return create_closure_value(
+                closure_value->env,
+                closure_value->var,
+                closure_value->exp_body
+            );
+        }
         default:
             return NULL;
     }
@@ -91,7 +119,31 @@ void free_value(Value *value) {
         return;
     }
 
-    free(value);
+    switch (value->type) {
+        case INT_VALUE: {
+            free(value);
+            break;
+        }
+        case BOOL_VALUE: {
+            free(value);
+            break;
+        }
+        case CLOSURE_VALUE: {
+            ClosureValue *closure_value = value->closure_value;
+            if (closure_value == NULL) {
+                free(value);
+                return;
+            }
+
+            free_var(closure_value->var);
+            free_env(closure_value->env);
+            free(closure_value);
+            free(value);
+            break;
+        }
+        default:
+            free(value);
+    }
 }
 
 Env *copy_env(const Env *env) {
@@ -301,6 +353,30 @@ Exp *create_let_exp(Var *var, Exp *exp_1, Exp *exp_2) {
     return exp;
 }
 
+Exp *create_fun_exp(Var *var, Exp *exp_body) {
+    FunExp *fun_exp = malloc(sizeof(FunExp));
+    fun_exp->var = var;
+    fun_exp->exp_body = exp_body;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = FUN_EXP;
+    exp->fun_exp = fun_exp;
+
+    return exp;
+}
+
+Exp *create_app_exp(Exp *exp_1, Exp *exp_2) {
+    AppExp *app_exp = malloc(sizeof(AppExp));
+    app_exp->exp_1 = exp_1;
+    app_exp->exp_2 = exp_2;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = APP_EXP;
+    exp->app_exp = app_exp;
+
+    return exp;
+}
+
 void free_exp(Exp *exp) {
     if (exp == NULL) {
         return;
@@ -363,6 +439,30 @@ void free_exp(Exp *exp) {
             free_exp(exp->let_exp->exp_1);
             free_exp(exp->let_exp->exp_2);
             free(exp->let_exp);
+            free(exp);
+            return;
+        }
+        case FUN_EXP: {
+            if (exp->fun_exp == NULL) {
+                free(exp);
+                return;
+            }
+
+            free_var(exp->fun_exp->var);
+            free_exp(exp->fun_exp->exp_body);
+            free(exp->fun_exp);
+            free(exp);
+            return;
+        }
+        case APP_EXP: {
+            if (exp->app_exp == NULL) {
+                free(exp);
+                return;
+            }
+
+            free_exp(exp->app_exp->exp_1);
+            free_exp(exp->app_exp->exp_2);
+            free(exp->app_exp);
             free(exp);
             return;
         }
@@ -588,6 +688,71 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
             free_value(value_1);
 
             return value_2;
+        }
+        case FUN_EXP: {
+            if (exp->fun_exp == NULL) {
+                return NULL;
+            }
+
+            if (exp->fun_exp->var == NULL) {
+                return NULL;
+            }
+
+            if (exp->fun_exp->exp_body == NULL) {
+                return NULL;
+            }
+
+            return create_closure_value(env, exp->fun_exp->var, exp->fun_exp->exp_body);
+        }
+        case APP_EXP: {
+            if (exp->app_exp == NULL) {
+                return NULL;
+            }
+
+            if (exp->app_exp->exp_1 == NULL) {
+                return NULL;
+            }
+
+            if (exp->app_exp->exp_2 == NULL) {
+                return NULL;
+            }
+
+            Value *value_1 = evaluate_impl(env, exp->app_exp->exp_1);
+            if (value_1 == NULL) {
+                return NULL;
+            }
+
+            if (value_1->type != CLOSURE_VALUE) {
+                free_value(value_1);
+                return NULL;
+            }
+
+            ClosureValue *closure_value = value_1->closure_value;
+
+            Value *value_2 = evaluate_impl(env, exp->app_exp->exp_2);
+            if (value_2 == NULL) {
+                free_value(value_1);
+                return NULL;
+            }
+
+            Env *env_new = create_appended_env(
+                closure_value->env,
+                closure_value->var,
+                value_2
+            );
+            if (env_new == NULL) {
+                free_value(value_2);
+                free_value(value_1);
+                return NULL;
+            }
+
+            Value *value_3 = evaluate_impl(env_new, closure_value->exp_body);
+
+            free_env(env_new);
+            free_value(value_2);
+            free_value(value_1);
+
+            return value_3;
         }
         default:
             return NULL;
@@ -1399,6 +1564,26 @@ bool fprint_value(FILE *fp, const Value *value) {
             fprintf(fp, "%s", value->bool_value ? "true" : "false");
             return true;
         }
+        case CLOSURE_VALUE: {
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            fprintf(fp, "(");
+            if (!fprint_env(fp, value->closure_value->env)) {
+                return false;
+            }
+            fprintf(fp, ")[fun ");
+            if (!fprint_var(fp, value->closure_value->var)) {
+                return false;
+            }
+            fprintf(fp, " -> ");
+            if (!fprint_exp(fp, value->closure_value->exp_body)) {
+                return false;
+            }
+            fprintf(fp, "]");
+            return true;
+        }
         default:
             return false;
     }
@@ -1561,8 +1746,8 @@ bool fprint_exp(FILE *fp, const Exp *exp) {
             }
 
             Var *var = exp->let_exp->var;
-            Exp *exp_1= exp->let_exp->exp_1;
-            Exp *exp_2= exp->let_exp->exp_2;
+            Exp *exp_1 = exp->let_exp->exp_1;
+            Exp *exp_2 = exp->let_exp->exp_2;
 
             fprintf(fp, "(let ");
             if (!fprint_var(fp, var)) {
@@ -1573,6 +1758,44 @@ bool fprint_exp(FILE *fp, const Exp *exp) {
                 return false;
             }
             fprintf(fp, " in ");
+            if (!fprint_exp(fp, exp_2)) {
+                return false;
+            }
+            fprintf(fp, ")");
+            return true;
+        }
+        case FUN_EXP: {
+            if (exp->fun_exp == NULL) {
+                return false;
+            }
+
+            Var *var = exp->fun_exp->var;
+            Exp *exp_body = exp->fun_exp->exp_body;
+
+            fprintf(fp, "(fun ");
+            if (!fprint_var(fp, var)) {
+                return false;
+            }
+            fprintf(fp, " -> ");
+            if (!fprint_exp(fp, exp_body)) {
+                return false;
+            }
+            fprintf(fp, ")");
+            return true;
+        }
+        case APP_EXP: {
+            if (exp->app_exp == NULL) {
+                return false;
+            }
+
+            Exp *exp_1 = exp->app_exp->exp_1;
+            Exp *exp_2 = exp->app_exp->exp_2;
+
+            fprintf(fp, "(");
+            if (!fprint_exp(fp, exp_1)) {
+                return false;
+            }
+            fprintf(fp, " ");
             if (!fprint_exp(fp, exp_2)) {
                 return false;
             }

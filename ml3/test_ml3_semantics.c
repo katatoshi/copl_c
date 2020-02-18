@@ -183,12 +183,49 @@ void test5(void) {
     free_exp(exp3);
 }
 
+void test6(void) {
+    Exp *exp1 = create_fun_exp(
+        create_var("x"),
+        create_plus_op_exp(
+            create_var_exp(create_var("x")),
+            create_var_exp(create_var("x"))
+        )
+    );
+    Env env = { .var_binding = NULL };
+    Value *value1 = evaluate_impl(&env, exp1);
+    fprint_value(stdout, value1);
+    printf("\n");
+    free_value(value1);
+    free_exp(exp1);
+}
+
+void test7(void) {
+    Exp *exp1 = create_app_exp(
+        create_fun_exp(
+            create_var("x"),
+            create_plus_op_exp(
+                create_var_exp(create_var("x")),
+                create_var_exp(create_var("x"))
+            )
+        ),
+        create_int_exp(2)
+    );
+    Env env = { .var_binding = NULL };
+    Value *value1 = evaluate_impl(&env, exp1);
+    fprint_value(stdout, value1);
+    printf("\n");
+    free_value(value1);
+    free_exp(exp1);
+}
+
 int main(void) {
-    test1();
-    test2();
-    test3();
-    test4();
-    test5();
+//    test1();
+//    test2();
+//    test3();
+//    test4();
+//    test5();
+    test6();
+    test7();
 
     return 0;
 }

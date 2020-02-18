@@ -13,14 +13,18 @@ typedef struct {
 
 typedef enum {
     INT_VALUE,
-    BOOL_VALUE
+    BOOL_VALUE,
+    CLOSURE_VALUE
 } ValueType;
+
+typedef struct ClosureValueTag ClosureValue;
 
 typedef struct {
     ValueType type;
     union {
         int int_value;
         bool bool_value;
+        ClosureValue *closure_value;
     };
 } Value;
 
@@ -52,13 +56,19 @@ typedef struct IfExpTag IfExp;
 
 typedef struct LetExpTag LetExp;
 
+typedef struct FunExpTag FunExp;
+
+typedef struct AppExpTag AppExp;
+
 typedef enum {
     INT_EXP,
     BOOL_EXP,
     VAR_EXP,
     OP_EXP,
     IF_EXP,
-    LET_EXP
+    LET_EXP,
+    FUN_EXP,
+    APP_EXP
 } ExpType;
 
 typedef struct {
@@ -70,8 +80,16 @@ typedef struct {
         OpExp *op_exp;
         IfExp *if_exp;
         LetExp *let_exp;
+        FunExp *fun_exp;
+        AppExp *app_exp;
     };
 } Exp;
+
+struct ClosureValueTag {
+    Env *env;
+    Var *var;
+    Exp *exp_body;
+};
 
 typedef enum {
     PLUS_OP_EXP,
@@ -94,6 +112,16 @@ struct IfExpTag {
 
 struct LetExpTag {
     Var *var;
+    Exp *exp_1;
+    Exp *exp_2;
+};
+
+struct FunExpTag {
+    Var *var;
+    Exp *exp_body;
+};
+
+struct AppExpTag {
     Exp *exp_1;
     Exp *exp_2;
 };
@@ -230,6 +258,8 @@ Value *create_int_value(const int int_value);
 
 Value *create_bool_value(const bool bool_value);
 
+Value *create_closure_value(const Env *env, const Var *var, Exp *exp);
+
 Value *copy_value(const Value *value);
 
 void free_value(Value *value);
@@ -259,6 +289,10 @@ Exp *create_lt_op_exp(Exp *exp_left, Exp *exp_right);
 Exp *create_if_exp(Exp *exp_cond, Exp *exp_true, Exp *exp_false);
 
 Exp *create_let_exp(Var *var, Exp *exp_1, Exp *exp_2);
+
+Exp *create_fun_exp(Var *var, Exp *exp_body);
+
+Exp *create_app_exp(Exp *exp_1, Exp *exp_2);
 
 void free_exp(Exp *exp);
 

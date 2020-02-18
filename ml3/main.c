@@ -54,21 +54,13 @@ int main(int argc, char *argv[]) {
                     continue;
                 }
 
-                switch (value->type) {
-                    case INT_VALUE: {
-                        printf("%d\n", value->int_value);
-                        break;
-                    }
-                    case BOOL_VALUE: {
-                        printf("%s\n", value->bool_value ? "true" : "false");
-                        break;
-                    }
-                    default: {
-                        free_value(value);
-                        free_exp(parsed_exp);
-                        return 0;
-                    }
+                if (!fprint_value(stdout, value)) {
+                    free_value(value);
+                    free_exp(parsed_exp);
+                    return 0;
                 }
+
+                printf("\n");
                 free_value(value);
                 break;
             }
