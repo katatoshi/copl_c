@@ -497,6 +497,16 @@ Value *create_value_from_derivation(Derivation *derivation) {
             value->int_value = derivation->minus_derivation->int_value;
             return value;
         }
+        case LT_DERIVATION: {
+            if (derivation->lt_derivation == NULL) {
+                return NULL;
+            }
+
+            Value *value = malloc(sizeof(Value));
+            value->type = BOOL_VALUE;
+            value->bool_value = derivation->lt_derivation->bool_value;
+            return value;
+        }
         case TIMES_DERIVATION: {
             if (derivation->times_derivation == NULL) {
                 return NULL;
@@ -509,12 +519,12 @@ Value *create_value_from_derivation(Derivation *derivation) {
         }
         case IF_TRUE_DERIVATION: {
             if (derivation->if_true_derivation == NULL) {
-                return false;
+                return NULL;
             }
 
             Value *value_src = derivation->if_true_derivation->value;
             if (value_src == NULL) {
-                return false;
+                return NULL;
             }
 
             Value *value = malloc(sizeof(Value));
@@ -535,12 +545,12 @@ Value *create_value_from_derivation(Derivation *derivation) {
         }
         case IF_FALSE_DERIVATION: {
             if (derivation->if_false_derivation == NULL) {
-                return false;
+                return NULL;
             }
 
             Value *value_src = derivation->if_false_derivation->value;
             if (value_src == NULL) {
-                return false;
+                return NULL;
             }
 
             Value *value = malloc(sizeof(Value));
