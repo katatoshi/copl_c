@@ -31,6 +31,7 @@ test_ml2_semantics.o : ml2_semantics.h
 
 clean :
 	rm -f ./ml2
+	rm -f ./test
 	rm -f ./lex.yy.c y.tab.c y.tab.h y.output
 	rm -f ./test_ml2_semantics
 	rm -f ./*.o
