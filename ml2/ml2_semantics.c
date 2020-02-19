@@ -1292,6 +1292,33 @@ void free_derivation(Derivation *derivation) {
             free(derivation);
             return;
         }
+        case VAR_1_DERIVATION: {
+            if (derivation->var_1_derivation == NULL) {
+                free_env(derivation->env);
+                free(derivation);
+                return;
+            }
+
+            free_value(derivation->var_1_derivation->value);
+            free(derivation->var_1_derivation);
+            free_env(derivation->env);
+            free(derivation);
+            return;
+        }
+        case VAR_2_DERIVATION: {
+            if (derivation->var_2_derivation == NULL) {
+                free_env(derivation->env);
+                free(derivation);
+                return;
+            }
+
+            free_derivation(derivation->var_2_derivation->premise);
+            free_value(derivation->var_2_derivation->value);
+            free(derivation->var_2_derivation);
+            free_env(derivation->env);
+            free(derivation);
+            return;
+        }
         case PLUS_DERIVATION: {
             if (derivation->plus_derivation == NULL) {
                 free_env(derivation->env);
@@ -1374,6 +1401,21 @@ void free_derivation(Derivation *derivation) {
             free_derivation(derivation->if_false_derivation->premise_false);
             free_value(derivation->if_false_derivation->value);
             free(derivation->if_false_derivation);
+            free_env(derivation->env);
+            free(derivation);
+            return;
+        }
+        case LET_DERIVATION: {
+            if (derivation->let_derivation == NULL) {
+                free_env(derivation->env);
+                free(derivation);
+                return;
+            }
+
+            free_derivation(derivation->let_derivation->premise_1);
+            free_derivation(derivation->let_derivation->premise_2);
+            free_value(derivation->let_derivation->value);
+            free(derivation->let_derivation);
             free_env(derivation->env);
             free(derivation);
             return;
