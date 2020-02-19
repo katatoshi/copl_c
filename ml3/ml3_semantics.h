@@ -136,6 +136,11 @@ typedef struct {
     bool bool_value;
 } BoolDerivation;
 
+typedef struct {
+    FunExp *fun_exp;
+    ClosureValue *closure_value;
+} FunDerivation;
+
 typedef struct Var1DerivationTag Var1Derivation;
 
 typedef struct Var2DerivationTag Var2Derivation;
@@ -154,6 +159,8 @@ typedef struct IfFalseDerivationTag IfFalseDerivation;
 
 typedef struct LetDerivationTag LetDerivation;
 
+typedef struct AppDerivationTag AppDerivation;
+
 typedef enum {
     INT_DERIVATION,
     BOOL_DERIVATION,
@@ -165,7 +172,9 @@ typedef enum {
     LT_DERIVATION,
     IF_TRUE_DERIVATION,
     IF_FALSE_DERIVATION,
-    LET_DERIVATION
+    LET_DERIVATION,
+    FUN_DERIVATION,
+    APP_DERIVATION
 } DerivationType;
 
 typedef struct {
@@ -183,6 +192,8 @@ typedef struct {
         IfTrueDerivation *if_true_derivation;
         IfFalseDerivation *if_false_derivation;
         LetDerivation *let_derivation;
+        FunDerivation *fun_derivation;
+        AppDerivation *app_derivation;
     };
 } Derivation;
 
@@ -246,6 +257,14 @@ struct LetDerivationTag {
     Value *value;
 };
 
+struct AppDerivationTag {
+    Derivation *premise_1;
+    Derivation *premise_2;
+    Derivation *premise_3;
+    AppExp *app_exp;
+    Value *value;
+};
+
 Var *create_var(const char *src_name);
 
 Var *copy_var(const Var *var);
@@ -304,6 +323,8 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value);
 
 bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value);
 
+bool try_get_closure_value_from_derivation(Derivation *derivation, ClosureValue *closure_value);
+
 Value *create_value_from_derivation(Derivation *derivation);
 
 Derivation *derive(Exp *exp);
@@ -331,6 +352,10 @@ bool fprint_op_exp(FILE *fp, OpExp *exp);
 bool fprint_if_exp(FILE *fp, IfExp *exp);
 
 bool fprint_let_exp(FILE *fp, LetExp *exp);
+
+bool fprint_fun_exp(FILE *fp, FunExp *exp);
+
+bool fprint_app_exp(FILE *fp, AppExp *exp);
 
 void fprint_indent(FILE *fp, const int level);
 

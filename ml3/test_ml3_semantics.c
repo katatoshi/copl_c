@@ -192,10 +192,16 @@ void test6(void) {
         )
     );
     Env env = { .var_binding = NULL };
+
     Value *value1 = evaluate_impl(&env, exp1);
     fprint_value(stdout, value1);
     printf("\n");
     free_value(value1);
+
+    Derivation *derivation1 = derive(exp1);
+    fprint_derivation(stdout, derivation1);
+    free_derivation(derivation1);
+
     free_exp(exp1);
 }
 
@@ -211,10 +217,16 @@ void test7(void) {
         create_int_exp(2)
     );
     Env env = { .var_binding = NULL };
+
     Value *value1 = evaluate_impl(&env, exp1);
     fprint_value(stdout, value1);
     printf("\n");
     free_value(value1);
+
+    Derivation *derivation1 = derive(exp1);
+    fprint_derivation(stdout, derivation1);
+    free_derivation(derivation1);
+
     free_exp(exp1);
 }
 
