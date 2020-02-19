@@ -281,6 +281,8 @@ Closure *create_closure(const Env *env, const Var *var, Exp *exp);
 
 Closure *create_copied_closure(const Closure *closure);
 
+bool copy_closure(Closure *closure_dst, const Closure *closure_src);
+
 void free_closure(Closure *closure);
 
 Value *create_closure_value(Closure *closure);

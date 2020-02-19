@@ -91,6 +91,17 @@ Closure *create_copied_closure(const Closure *closure) {
     return create_closure(closure->env, closure->var, closure->exp);
 }
 
+bool copy_closure(Closure *closure_dst, const Closure *closure_src) {
+    if (closure_dst == NULL || closure_src == NULL) {
+        return false;
+    }
+
+    closure_dst->env = create_copied_env(closure_src->env);
+    closure_dst->var = create_copied_var(closure_src->var);
+    closure_dst->exp = closure_src->exp;
+    return true;
+}
+
 Value *create_closure_value(Closure *closure_value) {
     if (closure_value == NULL) {
         return NULL;
@@ -1067,9 +1078,15 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = create_copied_env(derivation->fun_derivation->closure_value->env);
-            closure_value->var = create_copied_var(derivation->fun_derivation->closure_value->var);
-            closure_value->exp = derivation->fun_derivation->closure_value->exp;
+            Closure *closure = derivation->fun_derivation->closure_value;
+            if (closure == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, closure)) {
+                return false;
+            }
+
             return true;
         }
         case VAR_1_DERIVATION: {
@@ -1086,9 +1103,14 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = create_copied_env(value->closure_value->env);
-            closure_value->var = create_copied_var(value->closure_value->var);
-            closure_value->exp = value->closure_value->exp;
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
             return true;
         }
         case VAR_2_DERIVATION: {
@@ -1105,9 +1127,14 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = create_copied_env(value->closure_value->env);
-            closure_value->var = create_copied_var(value->closure_value->var);
-            closure_value->exp = value->closure_value->exp;
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
             return true;
         }
         case IF_TRUE_DERIVATION: {
@@ -1124,9 +1151,14 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = create_copied_env(value->closure_value->env);
-            closure_value->var = create_copied_var(value->closure_value->var);
-            closure_value->exp = value->closure_value->exp;
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
             return true;
         }
         case IF_FALSE_DERIVATION: {
@@ -1143,9 +1175,14 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = create_copied_env(value->closure_value->env);
-            closure_value->var = create_copied_var(value->closure_value->var);
-            closure_value->exp = value->closure_value->exp;
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
             return true;
         }
         case LET_DERIVATION: {
@@ -1162,9 +1199,14 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = create_copied_env(value->closure_value->env);
-            closure_value->var = create_copied_var(value->closure_value->var);
-            closure_value->exp = value->closure_value->exp;
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
             return true;
         }
         case APP_DERIVATION: {
@@ -1181,9 +1223,14 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = create_copied_env(value->closure_value->env);
-            closure_value->var = create_copied_var(value->closure_value->var);
-            closure_value->exp = value->closure_value->exp;
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
             return true;
         }
         default:
@@ -1279,7 +1326,9 @@ Value *create_value_from_derivation(Derivation *derivation) {
                 return NULL;
             }
 
-            Closure *closure_value = create_copied_closure(derivation->fun_derivation->closure_value);
+            Closure *closure_value = create_copied_closure(
+                derivation->fun_derivation->closure_value
+            );
             if (closure_value == NULL) {
                 return NULL;
             }
