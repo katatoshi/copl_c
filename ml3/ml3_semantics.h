@@ -17,14 +17,14 @@ typedef enum {
     CLOSURE_VALUE
 } ValueType;
 
-typedef struct ClosureValueTag ClosureValue;
+typedef struct ClosureTag Closure;
 
 typedef struct {
     ValueType type;
     union {
         int int_value;
         bool bool_value;
-        ClosureValue *closure_value;
+        Closure *closure_value;
     };
 } Value;
 
@@ -85,10 +85,10 @@ typedef struct {
     };
 } Exp;
 
-struct ClosureValueTag {
+struct ClosureTag {
     Env *env;
     Var *var;
-    Exp *exp_body;
+    Exp *exp;
 };
 
 typedef enum {
@@ -118,7 +118,7 @@ struct LetExpTag {
 
 struct FunExpTag {
     Var *var;
-    Exp *exp_body;
+    Exp *exp;
 };
 
 struct AppExpTag {
@@ -138,7 +138,7 @@ typedef struct {
 
 typedef struct {
     FunExp *fun_exp;
-    ClosureValue *closure_value;
+    Closure *closure_value;
 } FunDerivation;
 
 typedef struct Var1DerivationTag Var1Derivation;
@@ -277,7 +277,13 @@ Value *create_int_value(const int int_value);
 
 Value *create_bool_value(const bool bool_value);
 
-Value *create_closure_value(const Env *env, const Var *var, Exp *exp);
+Closure *create_closure(const Env *env, const Var *var, Exp *exp);
+
+Closure *copy_closure(const Closure *closure);
+
+void free_closure(Closure *closure);
+
+Value *create_closure_value(Closure *closure);
 
 Value *copy_value(const Value *value);
 
@@ -309,7 +315,7 @@ Exp *create_if_exp(Exp *exp_cond, Exp *exp_true, Exp *exp_false);
 
 Exp *create_let_exp(Var *var, Exp *exp_1, Exp *exp_2);
 
-Exp *create_fun_exp(Var *var, Exp *exp_body);
+Exp *create_fun_exp(Var *var, Exp *exp);
 
 Exp *create_app_exp(Exp *exp_1, Exp *exp_2);
 
@@ -323,7 +329,7 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value);
 
 bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value);
 
-bool try_get_closure_value_from_derivation(Derivation *derivation, ClosureValue *closure_value);
+bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *closure_value);
 
 Value *create_value_from_derivation(Derivation *derivation);
 
@@ -333,9 +339,11 @@ Derivation *derive_impl(const Env *env, Exp *exp);
 
 void free_derivation(Derivation *derivation);
 
-bool fprint_value(FILE *fp, const Value *value);
-
 bool fprint_var(FILE *fp, const Var *var);
+
+bool fprint_closure(FILE *fp, const Closure *closure);
+
+bool fprint_value(FILE *fp, const Value *value);
 
 bool fprint_env(FILE *fp, const Env *exp);
 
@@ -359,8 +367,8 @@ bool fprint_app_exp(FILE *fp, AppExp *exp);
 
 void fprint_indent(FILE *fp, const int level);
 
-bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int level);
-
 bool fprint_derivation(FILE *fp, const Derivation *derivation);
+
+bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int level);
 
 #endif // ML2_SEMANTICS_H

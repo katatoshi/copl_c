@@ -71,20 +71,45 @@ Value *create_bool_value(const bool bool_value) {
     return value;
 }
 
-Value *create_closure_value(const Env *env, const Var *var, Exp *exp_body) {
-    if (env == NULL || var == NULL || exp_body == NULL) {
+Closure *create_closure(const Env *env, const Var *var, Exp *exp) {
+    if (env == NULL || var == NULL || exp == NULL) {
         return NULL;
     }
 
-    ClosureValue *closure_value = malloc(sizeof(ClosureValue));
-    closure_value->env = copy_env(env);
-    closure_value->var = copy_var(var);
-    closure_value->exp_body = exp_body;
+    Closure *closure = malloc(sizeof(Closure));
+    closure->env = copy_env(env);
+    closure->var = copy_var(var);
+    closure->exp = exp;
+    return closure;
+}
+
+Closure *copy_closure(const Closure *closure) {
+    if (closure == NULL) {
+        return NULL;
+    }
+
+    return create_closure(closure->env, closure->var, closure->exp);
+}
+
+Value *create_closure_value(Closure *closure_value) {
+    if (closure_value == NULL) {
+        return NULL;
+    }
 
     Value *value = malloc(sizeof(Value));
     value->type = CLOSURE_VALUE;
     value->closure_value = closure_value;
     return value;
+}
+
+void free_closure(Closure *closure) {
+    if (closure == NULL) {
+        return;
+    }
+
+    free_env(closure->env);
+    free_var(closure->var);
+    free(closure);
 }
 
 Value *copy_value(const Value *value) {
@@ -98,16 +123,11 @@ Value *copy_value(const Value *value) {
         case BOOL_VALUE:
             return create_bool_value(value->bool_value);
         case CLOSURE_VALUE: {
-            ClosureValue *closure_value = value->closure_value;
-            if (closure_value == NULL) {
+            if (value->closure_value == NULL) {
                 return NULL;
             }
 
-            return create_closure_value(
-                closure_value->env,
-                closure_value->var,
-                closure_value->exp_body
-            );
+            return create_closure_value(copy_closure(value->closure_value));
         }
         default:
             return NULL;
@@ -129,15 +149,12 @@ void free_value(Value *value) {
             break;
         }
         case CLOSURE_VALUE: {
-            ClosureValue *closure_value = value->closure_value;
-            if (closure_value == NULL) {
+            if (value->closure_value == NULL) {
                 free(value);
                 return;
             }
 
-            free_var(closure_value->var);
-            free_env(closure_value->env);
-            free(closure_value);
+            free_closure(value->closure_value);
             free(value);
             break;
         }
@@ -353,16 +370,16 @@ Exp *create_let_exp(Var *var, Exp *exp_1, Exp *exp_2) {
     return exp;
 }
 
-Exp *create_fun_exp(Var *var, Exp *exp_body) {
+Exp *create_fun_exp(Var *var, Exp *exp) {
     FunExp *fun_exp = malloc(sizeof(FunExp));
     fun_exp->var = var;
-    fun_exp->exp_body = exp_body;
+    fun_exp->exp = exp;
 
-    Exp *exp = malloc(sizeof(Exp));
-    exp->type = FUN_EXP;
-    exp->fun_exp = fun_exp;
+    Exp *exp_new = malloc(sizeof(Exp));
+    exp_new->type = FUN_EXP;
+    exp_new->fun_exp = fun_exp;
 
-    return exp;
+    return exp_new;
 }
 
 Exp *create_app_exp(Exp *exp_1, Exp *exp_2) {
@@ -449,7 +466,7 @@ void free_exp(Exp *exp) {
             }
 
             free_var(exp->fun_exp->var);
-            free_exp(exp->fun_exp->exp_body);
+            free_exp(exp->fun_exp->exp);
             free(exp->fun_exp);
             free(exp);
             return;
@@ -698,11 +715,13 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
                 return NULL;
             }
 
-            if (exp->fun_exp->exp_body == NULL) {
+            if (exp->fun_exp->exp == NULL) {
                 return NULL;
             }
 
-            return create_closure_value(env, exp->fun_exp->var, exp->fun_exp->exp_body);
+            return create_closure_value(
+                create_closure(env, exp->fun_exp->var, exp->fun_exp->exp)
+            );
         }
         case APP_EXP: {
             if (exp->app_exp == NULL) {
@@ -727,7 +746,7 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
                 return NULL;
             }
 
-            ClosureValue *closure_value = value_1->closure_value;
+            Closure *closure_value = value_1->closure_value;
 
             Value *value_2 = evaluate_impl(env, exp->app_exp->exp_2);
             if (value_2 == NULL) {
@@ -746,7 +765,7 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
                 return NULL;
             }
 
-            Value *value_3 = evaluate_impl(env_new, closure_value->exp_body);
+            Value *value_3 = evaluate_impl(env_new, closure_value->exp);
 
             free_env(env_new);
             free_value(value_2);
@@ -1033,7 +1052,7 @@ bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value
     }
 }
 
-bool try_get_closure_value_from_derivation(Derivation *derivation, ClosureValue *closure_value) {
+bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *closure_value) {
     if (derivation == NULL) {
         return false;
     }
@@ -1050,7 +1069,7 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, ClosureValue 
 
             closure_value->env = copy_env(derivation->fun_derivation->closure_value->env);
             closure_value->var = copy_var(derivation->fun_derivation->closure_value->var);
-            closure_value->exp_body = derivation->fun_derivation->closure_value->exp_body;
+            closure_value->exp = derivation->fun_derivation->closure_value->exp;
             return true;
         }
         case VAR_1_DERIVATION: {
@@ -1069,7 +1088,7 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, ClosureValue 
 
             closure_value->env = copy_env(value->closure_value->env);
             closure_value->var = copy_var(value->closure_value->var);
-            closure_value->exp_body = value->closure_value->exp_body;
+            closure_value->exp = value->closure_value->exp;
             return true;
         }
         case VAR_2_DERIVATION: {
@@ -1088,7 +1107,7 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, ClosureValue 
 
             closure_value->env = copy_env(value->closure_value->env);
             closure_value->var = copy_var(value->closure_value->var);
-            closure_value->exp_body = value->closure_value->exp_body;
+            closure_value->exp = value->closure_value->exp;
             return true;
         }
         case IF_TRUE_DERIVATION: {
@@ -1107,7 +1126,7 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, ClosureValue 
 
             closure_value->env = copy_env(value->closure_value->env);
             closure_value->var = copy_var(value->closure_value->var);
-            closure_value->exp_body = value->closure_value->exp_body;
+            closure_value->exp = value->closure_value->exp;
             return true;
         }
         case IF_FALSE_DERIVATION: {
@@ -1126,7 +1145,7 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, ClosureValue 
 
             closure_value->env = copy_env(value->closure_value->env);
             closure_value->var = copy_var(value->closure_value->var);
-            closure_value->exp_body = value->closure_value->exp_body;
+            closure_value->exp = value->closure_value->exp;
             return true;
         }
         case LET_DERIVATION: {
@@ -1145,7 +1164,7 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, ClosureValue 
 
             closure_value->env = copy_env(value->closure_value->env);
             closure_value->var = copy_var(value->closure_value->var);
-            closure_value->exp_body = value->closure_value->exp_body;
+            closure_value->exp = value->closure_value->exp;
             return true;
         }
         case APP_DERIVATION: {
@@ -1164,7 +1183,7 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, ClosureValue 
 
             closure_value->env = copy_env(value->closure_value->env);
             closure_value->var = copy_var(value->closure_value->var);
-            closure_value->exp_body = value->closure_value->exp_body;
+            closure_value->exp = value->closure_value->exp;
             return true;
         }
         default:
@@ -1260,16 +1279,12 @@ Value *create_value_from_derivation(Derivation *derivation) {
                 return NULL;
             }
 
-            ClosureValue *closure_value = derivation->fun_derivation->closure_value;
+            Closure *closure_value = copy_closure(derivation->fun_derivation->closure_value);
             if (closure_value == NULL) {
                 return NULL;
             }
 
-            return create_closure_value(
-                closure_value->env,
-                closure_value->var,
-                closure_value->exp_body
-            );
+            return create_closure_value(closure_value);
         }
         case APP_DERIVATION: {
             if (derivation->app_derivation == NULL) {
@@ -1639,14 +1654,14 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
                 return NULL;
             }
 
-            if (exp->fun_exp->exp_body == NULL) {
+            if (exp->fun_exp->exp == NULL) {
                 return NULL;
             }
 
-            ClosureValue *closure_value = malloc(sizeof(ClosureValue));
-            closure_value->env = copy_env(env);
-            closure_value->var = copy_var(exp->fun_exp->var);
-            closure_value->exp_body = exp->fun_exp->exp_body;
+            Closure *closure_value = create_closure(env, exp->fun_exp->var, exp->fun_exp->exp);
+            if (closure_value == NULL) {
+                return NULL;
+            }
 
             FunDerivation *fun_derivation = malloc(sizeof(FunDerivation));
             fun_derivation->fun_exp = exp->fun_exp;
@@ -1676,7 +1691,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
                 return NULL;
             }
 
-            ClosureValue *closure_value = malloc(sizeof(ClosureValue));;
+            Closure *closure_value = malloc(sizeof(Closure));
             if (!try_get_closure_value_from_derivation(premise_1, closure_value)) {
                 free_derivation(premise_1);
                 return NULL;
@@ -1684,9 +1699,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
             Derivation *premise_2 = derive_impl(env, exp->app_exp->exp_2);
             if (premise_2 == NULL) {
-                free_env(closure_value->env);
-                free_var(closure_value->var);
-                free(closure_value);
+                free_closure(closure_value);
                 free_derivation(premise_1);
                 return NULL;
             }
@@ -1694,9 +1707,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
             Value *value_2 = create_value_from_derivation(premise_2);
             if (value_2 == NULL) {
                 free_derivation(premise_2);
-                free_env(closure_value->env);
-                free_var(closure_value->var);
-                free(closure_value);
+                free_closure(closure_value);
                 free_derivation(premise_1);
                 return NULL;
             }
@@ -1709,21 +1720,17 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
             if (env_new == NULL) {
                 free_value(value_2);
                 free_derivation(premise_2);
-                free_env(closure_value->env);
-                free_var(closure_value->var);
-                free(closure_value);
+                free_closure(closure_value);
                 free_derivation(premise_1);
                 return NULL;
             }
 
-            Derivation *premise_3 = derive_impl(env_new, closure_value->exp_body);
+            Derivation *premise_3 = derive_impl(env_new, closure_value->exp);
             if (premise_3 == NULL) {
                 free_env(env_new);
                 free_value(value_2);
                 free_derivation(premise_2);
-                free_env(closure_value->env);
-                free_var(closure_value->var);
-                free(closure_value);
+                free_closure(closure_value);
                 free_derivation(premise_1);
                 return NULL;
             }
@@ -1734,9 +1741,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
                 free_env(env_new);
                 free_value(value_2);
                 free_derivation(premise_2);
-                free_env(closure_value->env);
-                free_var(closure_value->var);
-                free(closure_value);
+                free_closure(closure_value);
                 free_derivation(premise_1);
                 return NULL;
             }
@@ -1755,9 +1760,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
             free_env(env_new);
             free_value(value_2);
-            free_env(closure_value->env);
-            free_var(closure_value->var);
-            free(closure_value);
+            free_closure(closure_value);
 
             return derivation;
         }
@@ -1952,6 +1955,40 @@ void free_derivation(Derivation *derivation) {
     }
 }
 
+bool fprint_var(FILE *fp, const Var *var) {
+    if (fp == NULL || var == NULL) {
+        return false;
+    }
+
+    if (var->name == NULL) {
+        return false;
+    }
+
+    fprintf(fp, "%s", var->name);
+    return true;
+}
+
+bool fprint_closure(FILE *fp, const Closure *closure) {
+    if (closure == NULL) {
+        return false;
+    }
+
+    fprintf(fp, "(");
+    if (!fprint_env(fp, closure->env)) {
+        return false;
+    }
+    fprintf(fp, ")[fun ");
+    if (!fprint_var(fp, closure->var)) {
+        return false;
+    }
+    fprintf(fp, " -> ");
+    if (!fprint_exp(fp, closure->exp)) {
+        return false;
+    }
+    fprintf(fp, "]");
+    return true;
+}
+
 bool fprint_value(FILE *fp, const Value *value) {
     if (fp == NULL || value == NULL) {
         return false;
@@ -1971,37 +2008,11 @@ bool fprint_value(FILE *fp, const Value *value) {
                 return false;
             }
 
-            fprintf(fp, "(");
-            if (!fprint_env(fp, value->closure_value->env)) {
-                return false;
-            }
-            fprintf(fp, ")[fun ");
-            if (!fprint_var(fp, value->closure_value->var)) {
-                return false;
-            }
-            fprintf(fp, " -> ");
-            if (!fprint_exp(fp, value->closure_value->exp_body)) {
-                return false;
-            }
-            fprintf(fp, "]");
-            return true;
+            return fprint_closure(fp, value->closure_value);
         }
         default:
             return false;
     }
-}
-
-bool fprint_var(FILE *fp, const Var *var) {
-    if (fp == NULL || var == NULL) {
-        return false;
-    }
-
-    if (var->name == NULL) {
-        return false;
-    }
-
-    fprintf(fp, "%s", var->name);
-    return true;
 }
 
 bool fprint_env(FILE *fp, const Env *env) {
@@ -2172,7 +2183,7 @@ bool fprint_exp(FILE *fp, const Exp *exp) {
             }
 
             Var *var = exp->fun_exp->var;
-            Exp *exp_body = exp->fun_exp->exp_body;
+            Exp *exp_body = exp->fun_exp->exp;
 
             fprintf(fp, "(fun ");
             if (!fprint_var(fp, var)) {
@@ -2301,6 +2312,10 @@ void fprint_indent(FILE *fp, const int level) {
     for (int i = 0; i < level; i++) {
         fprintf(fp, "  ");
     }
+}
+
+bool fprint_derivation(FILE *fp, const Derivation *derivation) {
+    return fprint_derivation_impl(fp, derivation, 0);
 }
 
 bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int level) {
@@ -2789,17 +2804,12 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
-            ClosureValue *closure_value = fun_derivation->closure_value;
-            if (closure_value == NULL) {
-                return false;
-            }
-            Value *value = create_closure_value(closure_value->env, closure_value->var, closure_value->exp_body);
-            if (value == NULL) {
+            if (fun_derivation->closure_value == NULL) {
                 return false;
             }
 
             fprintf(fp, " evalto ");
-            if (!fprint_value(fp, value)) {
+            if (!fprint_closure(fp, fun_derivation->closure_value)) {
                 return false;
             }
             fprintf(fp, " by E-Fun {}");
@@ -2858,8 +2868,4 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
         default:
             return false;
     }
-}
-
-bool fprint_derivation(FILE *fp, const Derivation *derivation) {
-    return fprint_derivation_impl(fp, derivation, 0);
 }
