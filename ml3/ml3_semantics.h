@@ -267,7 +267,7 @@ struct AppDerivationTag {
 
 Var *create_var(const char *src_name);
 
-Var *copy_var(const Var *var);
+Var *create_copied_var(const Var *var);
 
 bool is_same_var(const Var *var_1, const Var *var_2);
 
@@ -279,17 +279,17 @@ Value *create_bool_value(const bool bool_value);
 
 Closure *create_closure(const Env *env, const Var *var, Exp *exp);
 
-Closure *copy_closure(const Closure *closure);
+Closure *create_copied_closure(const Closure *closure);
 
 void free_closure(Closure *closure);
 
 Value *create_closure_value(Closure *closure);
 
-Value *copy_value(const Value *value);
+Value *create_copied_value(const Value *value);
 
 void free_value(Value *value);
 
-Env *copy_env(const Env *env);
+Env *create_copied_env(const Env *env);
 
 Env *create_poped_env(const Env *env);
 

@@ -24,7 +24,7 @@ Var *create_var(const char *src_name) {
     return var;
 }
 
-Var *copy_var(const Var* var) {
+Var *create_copied_var(const Var* var) {
     if (var == NULL) {
         return NULL;
     }
@@ -77,13 +77,13 @@ Closure *create_closure(const Env *env, const Var *var, Exp *exp) {
     }
 
     Closure *closure = malloc(sizeof(Closure));
-    closure->env = copy_env(env);
-    closure->var = copy_var(var);
+    closure->env = create_copied_env(env);
+    closure->var = create_copied_var(var);
     closure->exp = exp;
     return closure;
 }
 
-Closure *copy_closure(const Closure *closure) {
+Closure *create_copied_closure(const Closure *closure) {
     if (closure == NULL) {
         return NULL;
     }
@@ -112,7 +112,7 @@ void free_closure(Closure *closure) {
     free(closure);
 }
 
-Value *copy_value(const Value *value) {
+Value *create_copied_value(const Value *value) {
     if (value == NULL) {
         return NULL;
     }
@@ -127,7 +127,7 @@ Value *copy_value(const Value *value) {
                 return NULL;
             }
 
-            return create_closure_value(copy_closure(value->closure_value));
+            return create_closure_value(create_copied_closure(value->closure_value));
         }
         default:
             return NULL;
@@ -163,7 +163,7 @@ void free_value(Value *value) {
     }
 }
 
-Env *copy_env(const Env *env) {
+Env *create_copied_env(const Env *env) {
     if (env == NULL) {
         return NULL;
     }
@@ -183,8 +183,8 @@ Env *copy_env(const Env *env) {
         }
 
         VarBinding *var_binding_new = malloc(sizeof(VarBinding));
-        var_binding_new->var = copy_var(var_binding->var);
-        var_binding_new->value = copy_value(var_binding->value);
+        var_binding_new->var = create_copied_var(var_binding->var);
+        var_binding_new->value = create_copied_value(var_binding->value);
         var_binding_new->next = NULL;
 
         if (var_binding_new_prev == NULL) {
@@ -209,7 +209,7 @@ Env *create_poped_env(const Env *env) {
         return NULL;
     }
 
-    Env *env_new = copy_env(env);
+    Env *env_new = create_copied_env(env);
     VarBinding *var_binding_temp = env_new->var_binding;
     env_new->var_binding = var_binding_temp->next;
 
@@ -225,11 +225,11 @@ Env *create_appended_env(const Env *env, const Var *var, const Value *value) {
         return NULL;
     }
 
-    Env *env_new = copy_env(env);
+    Env *env_new = create_copied_env(env);
 
     VarBinding *var_binding = malloc(sizeof(VarBinding));
-    var_binding->var = copy_var(var);
-    var_binding->value = copy_value(value);
+    var_binding->var = create_copied_var(var);
+    var_binding->value = create_copied_value(value);
     var_binding->next = env_new->var_binding;
 
     env_new->var_binding = var_binding;
@@ -537,7 +537,7 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
             VarBinding *var_binding = env->var_binding;
             while (var_binding != NULL) {
                 if (is_same_var(var_binding->var, exp->var_exp->var)) {
-                    return copy_value(var_binding->value);
+                    return create_copied_value(var_binding->value);
                 }
 
                 var_binding = var_binding->next;
@@ -1067,8 +1067,8 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = copy_env(derivation->fun_derivation->closure_value->env);
-            closure_value->var = copy_var(derivation->fun_derivation->closure_value->var);
+            closure_value->env = create_copied_env(derivation->fun_derivation->closure_value->env);
+            closure_value->var = create_copied_var(derivation->fun_derivation->closure_value->var);
             closure_value->exp = derivation->fun_derivation->closure_value->exp;
             return true;
         }
@@ -1086,8 +1086,8 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = copy_env(value->closure_value->env);
-            closure_value->var = copy_var(value->closure_value->var);
+            closure_value->env = create_copied_env(value->closure_value->env);
+            closure_value->var = create_copied_var(value->closure_value->var);
             closure_value->exp = value->closure_value->exp;
             return true;
         }
@@ -1105,8 +1105,8 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = copy_env(value->closure_value->env);
-            closure_value->var = copy_var(value->closure_value->var);
+            closure_value->env = create_copied_env(value->closure_value->env);
+            closure_value->var = create_copied_var(value->closure_value->var);
             closure_value->exp = value->closure_value->exp;
             return true;
         }
@@ -1124,8 +1124,8 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = copy_env(value->closure_value->env);
-            closure_value->var = copy_var(value->closure_value->var);
+            closure_value->env = create_copied_env(value->closure_value->env);
+            closure_value->var = create_copied_var(value->closure_value->var);
             closure_value->exp = value->closure_value->exp;
             return true;
         }
@@ -1143,8 +1143,8 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = copy_env(value->closure_value->env);
-            closure_value->var = copy_var(value->closure_value->var);
+            closure_value->env = create_copied_env(value->closure_value->env);
+            closure_value->var = create_copied_var(value->closure_value->var);
             closure_value->exp = value->closure_value->exp;
             return true;
         }
@@ -1162,8 +1162,8 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = copy_env(value->closure_value->env);
-            closure_value->var = copy_var(value->closure_value->var);
+            closure_value->env = create_copied_env(value->closure_value->env);
+            closure_value->var = create_copied_var(value->closure_value->var);
             closure_value->exp = value->closure_value->exp;
             return true;
         }
@@ -1181,8 +1181,8 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
                 return false;
             }
 
-            closure_value->env = copy_env(value->closure_value->env);
-            closure_value->var = copy_var(value->closure_value->var);
+            closure_value->env = create_copied_env(value->closure_value->env);
+            closure_value->var = create_copied_var(value->closure_value->var);
             closure_value->exp = value->closure_value->exp;
             return true;
         }
@@ -1216,14 +1216,14 @@ Value *create_value_from_derivation(Derivation *derivation) {
                 return NULL;
             }
 
-            return copy_value(derivation->var_1_derivation->value);
+            return create_copied_value(derivation->var_1_derivation->value);
         }
         case VAR_2_DERIVATION: {
             if (derivation->var_2_derivation == NULL) {
                 return NULL;
             }
 
-            return copy_value(derivation->var_2_derivation->value);
+            return create_copied_value(derivation->var_2_derivation->value);
         }
         case PLUS_DERIVATION: {
             if (derivation->plus_derivation == NULL) {
@@ -1258,28 +1258,28 @@ Value *create_value_from_derivation(Derivation *derivation) {
                 return NULL;
             }
 
-            return copy_value(derivation->if_true_derivation->value);
+            return create_copied_value(derivation->if_true_derivation->value);
         }
         case IF_FALSE_DERIVATION: {
             if (derivation->if_false_derivation == NULL) {
                 return NULL;
             }
 
-            return copy_value(derivation->if_false_derivation->value);
+            return create_copied_value(derivation->if_false_derivation->value);
         }
         case LET_DERIVATION: {
             if (derivation->let_derivation == NULL) {
                 return NULL;
             }
 
-            return copy_value(derivation->let_derivation->value);
+            return create_copied_value(derivation->let_derivation->value);
         }
         case FUN_DERIVATION: {
             if (derivation->fun_derivation == NULL) {
                 return NULL;
             }
 
-            Closure *closure_value = copy_closure(derivation->fun_derivation->closure_value);
+            Closure *closure_value = create_copied_closure(derivation->fun_derivation->closure_value);
             if (closure_value == NULL) {
                 return NULL;
             }
@@ -1291,7 +1291,7 @@ Value *create_value_from_derivation(Derivation *derivation) {
                 return NULL;
             }
 
-            return copy_value(derivation->app_derivation->value);
+            return create_copied_value(derivation->app_derivation->value);
         }
         default:
             return NULL;
@@ -1324,7 +1324,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
             Derivation *derivation = malloc(sizeof(Derivation));
             derivation->type = INT_DERIVATION;
-            derivation->env = copy_env(env);
+            derivation->env = create_copied_env(env);
             derivation->int_derivation = int_derivation;
             return derivation;
         }
@@ -1339,7 +1339,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
             Derivation *derivation = malloc(sizeof(Derivation));
             derivation->type = BOOL_DERIVATION;
-            derivation->env = copy_env(env);
+            derivation->env = create_copied_env(env);
             derivation->bool_derivation = bool_derivation;
             return derivation;
         }
@@ -1355,11 +1355,11 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
             if (is_same_var(env->var_binding->var, exp->var_exp->var)) {
                 Var1Derivation *var_1_derivation = malloc(sizeof(Var1Derivation));
                 var_1_derivation->var_exp = exp->var_exp;
-                var_1_derivation->value = copy_value(env->var_binding->value);
+                var_1_derivation->value = create_copied_value(env->var_binding->value);
 
                 Derivation *derivation = malloc(sizeof(Derivation));
                 derivation->type = VAR_1_DERIVATION;
-                derivation->env = copy_env(env);
+                derivation->env = create_copied_env(env);
                 derivation->var_1_derivation = var_1_derivation;
                 return derivation;
             } else {
@@ -1390,7 +1390,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
                 Derivation *derivation = malloc(sizeof(Derivation));
                 derivation->type = VAR_2_DERIVATION;
-                derivation->env = copy_env(env);
+                derivation->env = create_copied_env(env);
                 derivation->var_2_derivation = var_2_derivation;
                 return derivation;
             }
@@ -1444,7 +1444,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
                     Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = PLUS_DERIVATION;
-                    derivation->env = copy_env(env);
+                    derivation->env = create_copied_env(env);
                     derivation->plus_derivation = plus_derivation;
                     return derivation;
                 }
@@ -1457,7 +1457,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
                     Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = MINUS_DERIVATION;
-                    derivation->env = copy_env(env);
+                    derivation->env = create_copied_env(env);
                     derivation->minus_derivation = minus_derivation;
                     return derivation;
                 }
@@ -1470,7 +1470,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
                     Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = TIMES_DERIVATION;
-                    derivation->env = copy_env(env);
+                    derivation->env = create_copied_env(env);
                     derivation->times_derivation = times_derivation;
                     return derivation;
                 }
@@ -1483,7 +1483,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
                     Derivation *derivation = malloc(sizeof(Derivation));
                     derivation->type = LT_DERIVATION;
-                    derivation->env = copy_env(env);
+                    derivation->env = create_copied_env(env);
                     derivation->lt_derivation = lt_derivation;
                     return derivation;
                 }
@@ -1541,7 +1541,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
                 Derivation *derivation = malloc(sizeof(Derivation));
                 derivation->type = IF_TRUE_DERIVATION;
-                derivation->env = copy_env(env);
+                derivation->env = create_copied_env(env);
                 derivation->if_true_derivation = if_true_derivation;
                 return derivation;
             } else {
@@ -1572,7 +1572,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
                 Derivation *derivation = malloc(sizeof(Derivation));
                 derivation->type = IF_FALSE_DERIVATION;
-                derivation->env = copy_env(env);
+                derivation->env = create_copied_env(env);
                 derivation->if_false_derivation = if_false_derivation;
                 return derivation;
             }
@@ -1637,7 +1637,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
             Derivation *derivation = malloc(sizeof(Derivation));
             derivation->type = LET_DERIVATION;
-            derivation->env = copy_env(env);
+            derivation->env = create_copied_env(env);
             derivation->let_derivation = let_derivation;
 
             free_env(env_new);
@@ -1669,7 +1669,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
             Derivation *derivation = malloc(sizeof(Derivation));
             derivation->type = FUN_DERIVATION;
-            derivation->env = copy_env(env);
+            derivation->env = create_copied_env(env);
             derivation->fun_derivation = fun_derivation;
             return derivation;
         }
@@ -1755,7 +1755,7 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
             Derivation *derivation = malloc(sizeof(Derivation));
             derivation->type = APP_DERIVATION;
-            derivation->env = copy_env(env);
+            derivation->env = create_copied_env(env);
             derivation->app_derivation = app_derivation;
 
             free_env(env_new);
@@ -2020,7 +2020,7 @@ bool fprint_env(FILE *fp, const Env *env) {
         return false;
     }
 
-    Env *env_reverse = copy_env(env);
+    Env *env_reverse = create_copied_env(env);
     VarBinding *var_binding_prev = NULL;
     VarBinding *var_binding_current = env_reverse->var_binding;
     while (var_binding_current != NULL) {
