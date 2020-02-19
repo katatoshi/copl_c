@@ -108,16 +108,16 @@ exp_times
     ;
 exp_app
     : exp_primary
-    | exp_primary INT {
+    | exp_app INT {
         $$ = create_app_exp($1, $2);
     }
-    | exp_primary BOOL {
+    | exp_app BOOL {
         $$ = create_app_exp($1, $2);
     }
-    | exp_primary VAR {
+    | exp_app VAR {
         $$ = create_app_exp($1, create_var_exp($2));
     }
-    | exp_primary LP exp RP {
+    | exp_app LP exp RP {
         $$ = create_app_exp($1, $3);
     }
     ;
