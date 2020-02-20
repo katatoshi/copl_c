@@ -183,6 +183,10 @@ typedef struct LetDerivationTag LetDerivation;
 
 typedef struct AppDerivationTag AppDerivation;
 
+typedef struct LetRecDerivationTag LetRecDerivation;
+
+typedef struct AppRecDerivationTag AppRecDerivation;
+
 typedef enum {
     INT_DERIVATION,
     BOOL_DERIVATION,
@@ -196,7 +200,9 @@ typedef enum {
     IF_FALSE_DERIVATION,
     LET_DERIVATION,
     FUN_DERIVATION,
-    APP_DERIVATION
+    APP_DERIVATION,
+    LET_REC_DERIVATION,
+    APP_REC_DERIVATION
 } DerivationType;
 
 typedef struct {
@@ -216,6 +222,8 @@ typedef struct {
         LetDerivation *let_derivation;
         FunDerivation *fun_derivation;
         AppDerivation *app_derivation;
+        LetRecDerivation *let_rec_derivation;
+        AppRecDerivation *app_rec_derivation;
     };
 } Derivation;
 
@@ -280,6 +288,20 @@ struct LetDerivationTag {
 };
 
 struct AppDerivationTag {
+    Derivation *premise_1;
+    Derivation *premise_2;
+    Derivation *premise_3;
+    AppExp *app_exp;
+    Value *value;
+};
+
+struct LetRecDerivationTag {
+    Derivation *premise;
+    LetRecExp *let_rec_exp;
+    Value *value;
+};
+
+struct AppRecDerivationTag {
     Derivation *premise_1;
     Derivation *premise_2;
     Derivation *premise_3;
@@ -366,6 +388,8 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value);
 bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value);
 
 bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *closure_value);
+
+bool try_get_rec_closure_value_from_derivation(Derivation *derivation, RecClosure *rec_closure_value);
 
 Value *create_value_from_derivation(Derivation *derivation);
 

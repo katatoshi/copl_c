@@ -862,6 +862,10 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
             switch (value_1->type) {
                 case CLOSURE_VALUE: {
                     Closure *closure_value = value_1->closure_value;
+                    if (closure_value == NULL) {
+                        free_value(value_1);
+                        return NULL;
+                    }
 
                     Value *value_2 = evaluate_impl(env, exp->app_exp->exp_2);
                     if (value_2 == NULL) {
@@ -890,6 +894,10 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
                 }
                 case REC_CLOSURE_VALUE: {
                     RecClosure *rec_closure_value = value_1->rec_closure_value;
+                    if (rec_closure_value == NULL) {
+                        free_value(value_1);
+                        return NULL;
+                    }
 
                     Value *value_2 = evaluate_impl(env, exp->app_exp->exp_2);
                     if (value_2 == NULL) {
@@ -1129,6 +1137,40 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value) {
             *int_value = value->int_value;
             return true;
         }
+        case LET_REC_DERIVATION: {
+            if (derivation->let_rec_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->let_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != INT_VALUE) {
+                return false;
+            }
+
+            *int_value = value->int_value;
+            return true;
+        }
+        case APP_REC_DERIVATION: {
+            if (derivation->app_rec_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->app_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != INT_VALUE) {
+                return false;
+            }
+
+            *int_value = value->int_value;
+            return true;
+        }
         default:
             return false;
     }
@@ -1258,6 +1300,40 @@ bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value
             *bool_value = value->bool_value;
             return true;
         }
+        case LET_REC_DERIVATION: {
+            if (derivation->let_rec_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->let_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != BOOL_VALUE) {
+                return false;
+            }
+
+            *bool_value = value->bool_value;
+            return true;
+        }
+        case APP_REC_DERIVATION: {
+            if (derivation->app_rec_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->app_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != BOOL_VALUE) {
+                return false;
+            }
+
+            *bool_value = value->bool_value;
+            return true;
+        }
         default:
             return false;
     }
@@ -1273,22 +1349,6 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
     }
 
     switch (derivation->type) {
-        case FUN_DERIVATION: {
-            if (derivation->fun_derivation == NULL) {
-                return false;
-            }
-
-            Closure *closure = derivation->fun_derivation->closure_value;
-            if (closure == NULL) {
-                return false;
-            }
-
-            if (!copy_closure(closure_value, closure)) {
-                return false;
-            }
-
-            return true;
-        }
         case VAR_1_DERIVATION: {
             if (derivation->var_1_derivation == NULL) {
                 return false;
@@ -1409,6 +1469,22 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
 
             return true;
         }
+        case FUN_DERIVATION: {
+            if (derivation->fun_derivation == NULL) {
+                return false;
+            }
+
+            Closure *closure = derivation->fun_derivation->closure_value;
+            if (closure == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, closure)) {
+                return false;
+            }
+
+            return true;
+        }
         case APP_DERIVATION: {
             if (derivation->app_derivation == NULL) {
                 return false;
@@ -1428,6 +1504,261 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
             }
 
             if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case LET_REC_DERIVATION: {
+            if (derivation->let_rec_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->let_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case APP_REC_DERIVATION: {
+            if (derivation->app_rec_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->app_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
+bool try_get_rec_closure_value_from_derivation(Derivation *derivation, RecClosure *rec_closure_value) {
+    if (derivation == NULL) {
+        return false;
+    }
+
+    if (rec_closure_value == NULL) {
+        return false;
+    }
+
+    switch (derivation->type) {
+        case VAR_1_DERIVATION: {
+            if (derivation->var_1_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->var_1_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != REC_CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->rec_closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_rec_closure(rec_closure_value, value->rec_closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case VAR_2_DERIVATION: {
+            if (derivation->var_2_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->var_2_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != REC_CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->rec_closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_rec_closure(rec_closure_value, value->rec_closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case IF_TRUE_DERIVATION: {
+            if (derivation->if_true_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->if_true_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != REC_CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->rec_closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_rec_closure(rec_closure_value, value->rec_closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case IF_FALSE_DERIVATION: {
+            if (derivation->if_false_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->if_false_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != REC_CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->rec_closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_rec_closure(rec_closure_value, value->rec_closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case LET_DERIVATION: {
+            if (derivation->let_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->let_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != REC_CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->rec_closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_rec_closure(rec_closure_value, value->rec_closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case APP_DERIVATION: {
+            if (derivation->app_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->app_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != REC_CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->rec_closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_rec_closure(rec_closure_value, value->rec_closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case LET_REC_DERIVATION: {
+            if (derivation->let_rec_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->let_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != REC_CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->rec_closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_rec_closure(rec_closure_value, value->rec_closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case APP_REC_DERIVATION: {
+            if (derivation->app_rec_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->app_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != REC_CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->rec_closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_rec_closure(rec_closure_value, value->rec_closure_value)) {
                 return false;
             }
 
@@ -1541,6 +1872,20 @@ Value *create_value_from_derivation(Derivation *derivation) {
             }
 
             return create_copied_value(derivation->app_derivation->value);
+        }
+        case LET_REC_DERIVATION: {
+            if (derivation->let_rec_derivation == NULL) {
+                return NULL;
+            }
+
+            return create_copied_value(derivation->let_rec_derivation->value);
+        }
+        case APP_REC_DERIVATION: {
+            if (derivation->app_rec_derivation == NULL) {
+                return NULL;
+            }
+
+            return create_copied_value(derivation->app_rec_derivation->value);
         }
         default:
             return NULL;
@@ -1940,76 +2285,250 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
                 return NULL;
             }
 
-            Closure *closure_value = malloc(sizeof(Closure));
-            if (!try_get_closure_value_from_derivation(premise_1, closure_value)) {
+            Value *value_1 = create_value_from_derivation(premise_1);
+            if (value_1 == NULL) {
                 free_derivation(premise_1);
                 return NULL;
             }
 
-            Derivation *premise_2 = derive_impl(env, exp->app_exp->exp_2);
-            if (premise_2 == NULL) {
-                free_closure(closure_value);
-                free_derivation(premise_1);
+            switch (value_1->type) {
+                case CLOSURE_VALUE: {
+                    Closure *closure_value = value_1->closure_value;
+                    if (closure_value == NULL) {
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    Derivation *premise_2 = derive_impl(env, exp->app_exp->exp_2);
+                    if (premise_2 == NULL) {
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    Value *value_2 = create_value_from_derivation(premise_2);
+                    if (value_2 == NULL) {
+                        free_derivation(premise_2);
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    Env *env_new = create_appended_env(
+                        closure_value->env,
+                        closure_value->var,
+                        value_2
+                    );
+                    if (env_new == NULL) {
+                        free_value(value_2);
+                        free_derivation(premise_2);
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    Derivation *premise_3 = derive_impl(env_new, closure_value->exp);
+                    if (premise_3 == NULL) {
+                        free_env(env_new);
+                        free_value(value_2);
+                        free_derivation(premise_2);
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    Value *value_3 = create_value_from_derivation(premise_3);
+                    if (value_3 == NULL) {
+                        free_env(env_new);
+                        free_value(value_2);
+                        free_derivation(premise_2);
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    AppDerivation *app_derivation = malloc(sizeof(AppDerivation));
+                    app_derivation->premise_1 = premise_1;
+                    app_derivation->premise_2 = premise_2;
+                    app_derivation->premise_3 = premise_3;
+                    app_derivation->app_exp = exp->app_exp;
+                    app_derivation->value = value_3;
+
+                    Derivation *derivation = malloc(sizeof(Derivation));
+                    derivation->type = APP_DERIVATION;
+                    derivation->env = create_copied_env(env);
+                    derivation->app_derivation = app_derivation;
+
+                    free_env(env_new);
+                    free_value(value_2);
+                    free_value(value_1);
+
+                    return derivation;
+                }
+                case REC_CLOSURE_VALUE: {
+                    RecClosure *rec_closure_value = value_1->rec_closure_value;
+                    if (rec_closure_value == NULL) {
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    Derivation *premise_2 = derive_impl(env, exp->app_exp->exp_2);
+                    if (premise_2 == NULL) {
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    Value *value_2 = create_value_from_derivation(premise_2);
+                    if (value_2 == NULL) {
+                        free_derivation(premise_2);
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    Env *env_temp = create_appended_env(
+                        rec_closure_value->env,
+                        rec_closure_value->var_rec,
+                        value_1
+                    );
+                    if (env_temp == NULL) {
+                        free_value(value_2);
+                        free_derivation(premise_2);
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    Env *env_new = create_appended_env(
+                        env_temp,
+                        rec_closure_value->var,
+                        value_2
+                    );
+                    free_env(env_temp);
+                    if (env_new == NULL) {
+                        free_value(value_2);
+                        free_derivation(premise_2);
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                        return NULL;
+                    }
+
+                    Derivation *premise_3 = derive_impl(env_new, rec_closure_value->exp);
+                    if (premise_3 == NULL) {
+                        free_env(env_new);
+                        free_value(value_2);
+                        free_derivation(premise_2);
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                    }
+
+                    Value *value_3 = create_value_from_derivation(premise_3);
+                    if (value_3 == NULL) {
+                        free_derivation(premise_3);
+                        free_env(env_new);
+                        free_value(value_2);
+                        free_derivation(premise_2);
+                        free_value(value_1);
+                        free_derivation(premise_1);
+                    }
+
+                    AppRecDerivation *app_rec_derivation = malloc(sizeof(AppRecDerivation));
+                    app_rec_derivation->premise_1 = premise_1;
+                    app_rec_derivation->premise_2 = premise_2;
+                    app_rec_derivation->premise_3 = premise_3;
+                    app_rec_derivation->app_exp = exp->app_exp;
+                    app_rec_derivation->value = value_3;
+
+                    Derivation *derivation = malloc(sizeof(Derivation));
+                    derivation->type = APP_REC_DERIVATION;
+                    derivation->env = create_copied_env(env);
+                    derivation->app_rec_derivation = app_rec_derivation;
+
+                    free_env(env_new);
+                    free_value(value_2);
+                    free_value(value_1);
+
+                    return derivation;
+                }
+                default: {
+                    free_value(value_1);
+                    free_derivation(premise_1);
+                    return NULL;
+                }
+            }
+        }
+        case LET_REC_EXP: {
+            if (exp->let_rec_exp == NULL) {
                 return NULL;
             }
 
-            Value *value_2 = create_value_from_derivation(premise_2);
-            if (value_2 == NULL) {
-                free_derivation(premise_2);
-                free_closure(closure_value);
-                free_derivation(premise_1);
+            if (exp->let_rec_exp->var_rec == NULL) {
+                return NULL;
+            }
+
+            if (exp->let_rec_exp->var == NULL) {
+                return NULL;
+            }
+
+            if (exp->let_rec_exp->exp_1 == NULL) {
+                return NULL;
+            }
+
+            if (exp->let_rec_exp->exp_2 == NULL) {
+                return NULL;
+            }
+
+            Value *rec_closure_value = create_rec_closure_value(
+                create_rec_closure(
+                    env,
+                    exp->let_rec_exp->var_rec,
+                    exp->let_rec_exp->var,
+                    exp->let_rec_exp->exp_1
+                )
+            );
+            if (rec_closure_value == NULL) {
                 return NULL;
             }
 
             Env *env_new = create_appended_env(
-                closure_value->env,
-                closure_value->var,
-                value_2
+                env,
+                exp->let_rec_exp->var_rec,
+                rec_closure_value
             );
             if (env_new == NULL) {
-                free_value(value_2);
-                free_derivation(premise_2);
-                free_closure(closure_value);
-                free_derivation(premise_1);
+                free_value(rec_closure_value);
                 return NULL;
             }
 
-            Derivation *premise_3 = derive_impl(env_new, closure_value->exp);
-            if (premise_3 == NULL) {
+            Derivation *premise = derive_impl(env_new, exp->let_rec_exp->exp_2);
+            if (premise == NULL) {
                 free_env(env_new);
-                free_value(value_2);
-                free_derivation(premise_2);
-                free_closure(closure_value);
-                free_derivation(premise_1);
+                free_value(rec_closure_value);
                 return NULL;
             }
 
-            Value *value_3 = create_value_from_derivation(premise_3);
-            if (value_3 == NULL) {
-                free_value(value_3);
+            Value *value = create_value_from_derivation(premise);
+            if (value == NULL) {
+                free_derivation(premise);
                 free_env(env_new);
-                free_value(value_2);
-                free_derivation(premise_2);
-                free_closure(closure_value);
-                free_derivation(premise_1);
-                return NULL;
+                free_value(rec_closure_value);
             }
 
-            AppDerivation *app_derivation = malloc(sizeof(AppDerivation));
-            app_derivation->premise_1 = premise_1;
-            app_derivation->premise_2 = premise_2;
-            app_derivation->premise_3 = premise_3;
-            app_derivation->app_exp = exp->app_exp;
-            app_derivation->value = value_3;
+            LetRecDerivation *let_rec_derivation = malloc(sizeof(LetRecDerivation));
+            let_rec_derivation->premise = premise;
+            let_rec_derivation->let_rec_exp = exp->let_rec_exp;
+            let_rec_derivation->value = value;
 
             Derivation *derivation = malloc(sizeof(Derivation));
-            derivation->type = APP_DERIVATION;
+            derivation->type = LET_REC_DERIVATION;
             derivation->env = create_copied_env(env);
-            derivation->app_derivation = app_derivation;
+            derivation->let_rec_derivation = let_rec_derivation;
 
             free_env(env_new);
-            free_value(value_2);
-            free_closure(closure_value);
+            free_value(rec_closure_value);
 
             return derivation;
         }
@@ -2193,6 +2712,36 @@ void free_derivation(Derivation *derivation) {
             free_derivation(derivation->app_derivation->premise_3);
             free_value(derivation->app_derivation->value);
             free(derivation->app_derivation);
+            free_env(derivation->env);
+            free(derivation);
+            return;
+        }
+        case LET_REC_DERIVATION: {
+            if (derivation->let_rec_derivation == NULL) {
+                free_env(derivation->env);
+                free(derivation);
+                return;
+            }
+
+            free_derivation(derivation->let_rec_derivation->premise);
+            free_value(derivation->let_rec_derivation->value);
+            free(derivation->let_rec_derivation);
+            free_env(derivation->env);
+            free(derivation);
+            return;
+        }
+        case APP_REC_DERIVATION: {
+            if (derivation->app_rec_derivation == NULL) {
+                free_env(derivation->env);
+                free(derivation);
+                return;
+            }
+
+            free_derivation(derivation->app_rec_derivation->premise_1);
+            free_derivation(derivation->app_rec_derivation->premise_2);
+            free_derivation(derivation->app_rec_derivation->premise_3);
+            free_value(derivation->app_rec_derivation->value);
+            free(derivation->app_rec_derivation);
             free_env(derivation->env);
             free(derivation);
             return;
@@ -3176,6 +3725,92 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             }
             fprintf(fp, ";\n");
             if (!fprint_derivation_impl(fp, app_derivation->premise_3, level + 1)) {
+                return false;
+            }
+            fprintf(fp, "\n");
+            fprint_indent(fp, level);
+            fprintf(fp, "}");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case LET_REC_DERIVATION: {
+            LetRecDerivation *let_rec_derivation = derivation->let_rec_derivation;
+            if (let_rec_derivation == NULL) {
+                return false;
+            }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
+            if (!fprint_let_rec_exp(fp, let_rec_derivation->let_rec_exp)) {
+                return false;
+            }
+
+            Value *value = let_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            fprintf(fp, " evalto ");
+            if (!fprint_value(fp, value)) {
+                return false;
+            }
+            fprintf(fp, " by E-LetRec {\n");
+            if (!fprint_derivation_impl(fp, let_rec_derivation->premise, level + 1)) {
+                return false;
+            }
+            fprintf(fp, "\n");
+            fprint_indent(fp, level);
+            fprintf(fp, "}");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case APP_REC_DERIVATION: {
+            AppRecDerivation *app_rec_derivation = derivation->app_rec_derivation;
+            if (app_rec_derivation == NULL) {
+                return false;
+            }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
+            if (!fprint_app_exp(fp, app_rec_derivation->app_exp)) {
+                return false;
+            }
+
+            Value *value = app_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            fprintf(fp, " evalto ");
+            if (!fprint_value(fp, value)) {
+                return false;
+            }
+            fprintf(fp, " by E-AppRec {\n");
+            if (!fprint_derivation_impl(fp, app_rec_derivation->premise_1, level + 1)) {
+                return false;
+            }
+            fprintf(fp, ";\n");
+            if (!fprint_derivation_impl(fp, app_rec_derivation->premise_2, level + 1)) {
+                return false;
+            }
+            fprintf(fp, ";\n");
+            if (!fprint_derivation_impl(fp, app_rec_derivation->premise_3, level + 1)) {
                 return false;
             }
             fprintf(fp, "\n");
