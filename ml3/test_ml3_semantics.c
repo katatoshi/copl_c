@@ -230,6 +230,62 @@ void test7(void) {
     free_exp(exp1);
 }
 
+void test8(void) {
+    Exp *exp1 = create_let_rec_exp(
+        create_var("f"),
+        create_var("n"),
+        create_int_exp(0),
+        create_app_exp(
+            create_var_exp(create_var("f")),
+            create_int_exp(0)
+        )
+    );
+    Env env = { .var_binding = NULL };
+
+    Value *value1 = evaluate_impl(&env, exp1);
+    fprint_value(stdout, value1);
+    printf("\n");
+    free_value(value1);
+
+    free_exp(exp1);
+}
+
+void test9(void) {
+    Exp *exp1 = create_let_rec_exp(
+        create_var("fact"),
+        create_var("n"),
+        create_if_exp(
+            create_lt_op_exp(
+                create_var_exp(create_var("n")),
+                create_int_exp(2)
+            ),
+            create_int_exp(1),
+            create_times_op_exp(
+                create_var_exp(create_var("n")),
+                create_app_exp(
+                    create_var_exp(create_var("fact")),
+                    create_minus_op_exp(
+                        create_var_exp(create_var("n")),
+                        create_int_exp(1)
+                    )
+                )
+            )
+        ),
+        create_app_exp(
+            create_var_exp(create_var("fact")),
+            create_int_exp(5)
+        )
+    );
+    Env env = { .var_binding = NULL };
+
+    Value *value1 = evaluate_impl(&env, exp1);
+    fprint_value(stdout, value1);
+    printf("\n");
+    free_value(value1);
+
+    free_exp(exp1);
+}
+
 int main(void) {
 //    test1();
 //    test2();
@@ -238,6 +294,8 @@ int main(void) {
 //    test5();
     test6();
     test7();
+    test8();
+    test9();
 
     return 0;
 }

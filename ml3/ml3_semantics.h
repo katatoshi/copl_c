@@ -14,10 +14,13 @@ typedef struct {
 typedef enum {
     INT_VALUE,
     BOOL_VALUE,
-    CLOSURE_VALUE
+    CLOSURE_VALUE,
+    REC_CLOSURE_VALUE
 } ValueType;
 
 typedef struct ClosureTag Closure;
+
+typedef struct RecClosureTag RecClosure;
 
 typedef struct {
     ValueType type;
@@ -25,6 +28,7 @@ typedef struct {
         int int_value;
         bool bool_value;
         Closure *closure_value;
+        RecClosure *rec_closure_value;
     };
 } Value;
 
@@ -60,6 +64,8 @@ typedef struct FunExpTag FunExp;
 
 typedef struct AppExpTag AppExp;
 
+typedef struct LetRecExpTag LetRecExp;
+
 typedef enum {
     INT_EXP,
     BOOL_EXP,
@@ -68,7 +74,8 @@ typedef enum {
     IF_EXP,
     LET_EXP,
     FUN_EXP,
-    APP_EXP
+    APP_EXP,
+    LET_REC_EXP
 } ExpType;
 
 typedef struct {
@@ -82,11 +89,19 @@ typedef struct {
         LetExp *let_exp;
         FunExp *fun_exp;
         AppExp *app_exp;
+        LetRecExp *let_rec_exp;
     };
 } Exp;
 
 struct ClosureTag {
     Env *env;
+    Var *var;
+    Exp *exp;
+};
+
+struct RecClosureTag {
+    Env *env;
+    Var *var_rec;
     Var *var;
     Exp *exp;
 };
@@ -122,6 +137,13 @@ struct FunExpTag {
 };
 
 struct AppExpTag {
+    Exp *exp_1;
+    Exp *exp_2;
+};
+
+struct LetRecExpTag {
+    Var *var_rec;
+    Var *var;
     Exp *exp_1;
     Exp *exp_2;
 };
@@ -287,6 +309,16 @@ void free_closure(Closure *closure);
 
 Value *create_closure_value(Closure *closure);
 
+RecClosure *create_rec_closure(const Env *env, const Var *var_rec, const Var *var, Exp *exp);
+
+RecClosure *create_copied_rec_closure(const RecClosure *rec_closure);
+
+bool copy_rec_closure(RecClosure *rec_closure_dst, const RecClosure *rec_closure_src);
+
+void free_rec_closure(RecClosure *rec_closure);
+
+Value *create_rec_closure_value(RecClosure *rec_closure);
+
 Value *create_copied_value(const Value *value);
 
 void free_value(Value *value);
@@ -321,6 +353,8 @@ Exp *create_fun_exp(Var *var, Exp *exp);
 
 Exp *create_app_exp(Exp *exp_1, Exp *exp_2);
 
+Exp *create_let_rec_exp(Var *var_rec, Var *var, Exp *exp_1, Exp *exp_2);
+
 void free_exp(Exp *exp);
 
 Value *evaluate(const Exp *exp);
@@ -345,6 +379,8 @@ bool fprint_var(FILE *fp, const Var *var);
 
 bool fprint_closure(FILE *fp, const Closure *closure);
 
+bool fprint_rec_closure(FILE *fp, const RecClosure *rec_closure);
+
 bool fprint_value(FILE *fp, const Value *value);
 
 bool fprint_env(FILE *fp, const Env *exp);
@@ -366,6 +402,8 @@ bool fprint_let_exp(FILE *fp, LetExp *exp);
 bool fprint_fun_exp(FILE *fp, FunExp *exp);
 
 bool fprint_app_exp(FILE *fp, AppExp *exp);
+
+bool fprint_let_rec_exp(FILE *fp, LetRecExp *exp);
 
 void fprint_indent(FILE *fp, const int level);
 

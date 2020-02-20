@@ -22,6 +22,7 @@ int yywrap(void) {
 "in" return IN;
 "fun" return FUN;
 "->" return TO;
+"rec" return REC;
 [0-9]+ {
     int value;
     sscanf(yytext, "%d", &value);

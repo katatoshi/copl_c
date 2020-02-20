@@ -18,7 +18,7 @@ Exp *parsed_exp;
 }
 %token <var> VAR
 %token <exp> INT BOOL
-%token PLUS MINUS TIMES LT IF THEN ELSE LET EQ IN FUN TO LP RP END_OF_EXP END_OF_FILE
+%token PLUS MINUS TIMES LT IF THEN ELSE LET EQ IN FUN TO REC LP RP END_OF_EXP END_OF_FILE
 %type <exp> exp exp_lt exp_plus exp_times exp_app exp_primary
 %%
 line
@@ -83,6 +83,21 @@ exp
     }
     | exp_times TIMES FUN VAR TO exp {
         $$ = create_times_op_exp($1, create_fun_exp($4, $6));
+    }
+    | LET REC VAR EQ FUN VAR TO exp IN exp {
+        $$ = create_let_rec_exp($3, $6, $8, $10);
+    }
+    | exp_lt LT LET REC VAR EQ FUN VAR TO exp IN exp {
+        $$ = create_lt_op_exp($1, create_let_rec_exp($5, $8, $10, $12));
+    }
+    | exp_plus PLUS LET REC VAR EQ FUN VAR TO exp IN exp {
+        $$ = create_plus_op_exp($1, create_let_rec_exp($5, $8, $10, $12));
+    }
+    | exp_plus MINUS LET REC VAR EQ FUN VAR TO exp IN exp {
+        $$ = create_minus_op_exp($1, create_let_rec_exp($5, $8, $10, $12));
+    }
+    | exp_times TIMES LET REC VAR EQ FUN VAR TO exp IN exp {
+        $$ = create_times_op_exp($1, create_let_rec_exp($5, $8, $10, $12));
     }
     ;
 exp_lt
