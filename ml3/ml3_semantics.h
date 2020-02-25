@@ -1,5 +1,5 @@
-#ifndef ML2_SEMANTICS_H
-#define ML2_SEMANTICS_H
+#ifndef ML3_SEMANTICS_H
+#define ML3_SEMANTICS_H
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -435,4 +435,4 @@ bool fprint_derivation(FILE *fp, const Derivation *derivation);
 
 bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int level);
 
-#endif // ML2_SEMANTICS_H
+#endif // ML3_SEMANTICS_H
