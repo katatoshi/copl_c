@@ -286,16 +286,85 @@ void test9(void) {
     free_exp(exp1);
 }
 
+void test10(void) {
+    Exp *exp1 = create_cons_exp(
+        create_int_exp(1),
+        create_cons_exp(
+            create_int_exp(2),
+            create_nil_exp()
+        )
+    );
+    Env env = { .var_binding = NULL };
+
+    Value *value1 = evaluate_impl(&env, exp1);
+    fprint_value(stdout, value1);
+    printf("\n");
+    free_value(value1);
+
+    free_exp(exp1);
+}
+
+void test11(void) {
+    Exp *exp1 = create_match_exp(
+        create_cons_exp(
+            create_int_exp(1),
+            create_cons_exp(
+                create_int_exp(2),
+                create_nil_exp()
+            )
+        ),
+        create_int_exp(0),
+        create_var("a"),
+        create_var("b"),
+        create_var_exp(create_var("a"))
+    );
+    Env env = { .var_binding = NULL };
+
+    Value *value1 = evaluate_impl(&env, exp1);
+    fprint_value(stdout, value1);
+    printf("\n");
+    free_value(value1);
+
+    free_exp(exp1);
+}
+
+void test12(void) {
+    Exp *exp1 = create_match_exp(
+        create_cons_exp(
+            create_int_exp(1),
+            create_cons_exp(
+                create_int_exp(2),
+                create_nil_exp()
+            )
+        ),
+        create_int_exp(0),
+        create_var("a"),
+        create_var("b"),
+        create_var_exp(create_var("b"))
+    );
+    Env env = { .var_binding = NULL };
+
+    Value *value1 = evaluate_impl(&env, exp1);
+    fprint_value(stdout, value1);
+    printf("\n");
+    free_value(value1);
+
+    free_exp(exp1);
+}
+
 int main(void) {
 //    test1();
 //    test2();
 //    test3();
 //    test4();
 //    test5();
-    test6();
-    test7();
-    test8();
-    test9();
+//    test6();
+//    test7();
+//    test8();
+//    test9();
+    test10();
+    test11();
+    test12();
 
     return 0;
 }

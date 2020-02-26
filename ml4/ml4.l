@@ -23,6 +23,11 @@ int yywrap(void) {
 "fun" return FUN;
 "->" return TO;
 "rec" return REC;
+"[]" return NIL;
+"::" return CONS;
+"match" return MATCH;
+"with" return WITH;
+"|" return OR;
 [0-9]+ {
     int value;
     sscanf(yytext, "%d", &value);

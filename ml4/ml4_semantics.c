@@ -183,6 +183,56 @@ void free_rec_closure(RecClosure *rec_closure) {
     free(rec_closure);
 }
 
+Value *create_nil_value() {
+    Value *value = malloc(sizeof(Value));
+    value->type = NIL_VALUE;
+    return value;
+}
+
+Cons *create_cons(Value *value_elem, Value *value_list) {
+    if (value_elem == NULL || value_list == NULL) {
+        return NULL;
+    }
+
+    Cons *cons = malloc(sizeof(Cons));
+    cons->value_elem = value_elem;
+    cons->value_list = value_list;
+    return cons;
+}
+
+Cons *create_copied_cons(const Cons *cons) {
+    if (cons == NULL) {
+        return NULL;
+    }
+
+    return create_cons(cons->value_elem, cons->value_list);
+}
+
+bool copy_cons(Cons *cons_dst, const Cons *cons_src) {
+    if (cons_dst == NULL || cons_src == NULL) {
+        return false;
+    }
+
+    cons_dst->value_elem = cons_src->value_elem;
+    cons_dst->value_list = cons_src->value_list;
+    return true;
+}
+
+Value *create_cons_value(Cons *cons_value) {
+    if (cons_value == NULL) {
+        return NULL;
+    }
+
+    Value *value = malloc(sizeof(Value));
+    value->type = CONS_VALUE;
+    value->cons_value = cons_value;
+    return value;
+}
+
+void free_cons(Cons *cons) {
+    free(cons);
+}
+
 Value *create_copied_value(const Value *value) {
     if (value == NULL) {
         return NULL;
@@ -208,6 +258,16 @@ Value *create_copied_value(const Value *value) {
             return create_rec_closure_value(
                 create_copied_rec_closure(value->rec_closure_value)
             );
+        }
+        case NIL_VALUE: {
+            return create_nil_value();
+        }
+        case CONS_VALUE: {
+            if (value->cons_value == NULL) {
+                return NULL;
+            }
+
+            return create_cons_value(create_copied_cons(value->cons_value));
         }
         default:
             return NULL;
@@ -245,6 +305,20 @@ void free_value(Value *value) {
             }
 
             free_rec_closure(value->rec_closure_value);
+            free(value);
+            break;
+        }
+        case NIL_VALUE: {
+            free(value);
+            break;
+        }
+        case CONS_VALUE: {
+            if (value->cons_value == NULL) {
+                free(value);
+                return;
+            }
+
+            free_cons(value->cons_value);
             free(value);
             break;
         }
@@ -498,6 +572,52 @@ Exp *create_let_rec_exp(Var *var_rec, Var *var, Exp *exp_1, Exp *exp_2) {
     return exp;
 }
 
+Exp *create_nil_exp() {
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = NIL_EXP;
+
+    return exp;
+}
+
+Exp *create_cons_exp(Exp *exp_elem, Exp *exp_list) {
+    ConsExp *cons_exp = malloc(sizeof(ConsExp));
+    cons_exp->exp_elem = exp_elem;
+    cons_exp->exp_list = exp_list;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = CONS_EXP;
+    exp->cons_exp = cons_exp;
+
+    return exp;
+}
+
+Exp *create_match_exp(Exp *exp_list, Exp *exp_match_nil, Var *var_elem, Var *var_list, Exp *exp_match_cons) {
+    if (exp_list == NULL
+        || exp_match_nil == NULL
+        || var_elem == NULL
+        || var_list == NULL
+        || exp_match_cons == NULL) {
+        return NULL;
+    }
+
+    if (is_same_var(var_elem, var_list)) {
+        return NULL;
+    }
+
+    MatchExp *match_exp = malloc(sizeof(MatchExp));
+    match_exp->exp_list = exp_list;
+    match_exp->exp_match_nil = exp_match_nil;
+    match_exp->var_elem = var_elem;
+    match_exp->var_list = var_list;
+    match_exp->exp_match_cons = exp_match_cons;
+
+    Exp *exp = malloc(sizeof(Exp));
+    exp->type = MATCH_EXP;
+    exp->match_exp = match_exp;
+
+    return exp;
+}
+
 void free_exp(Exp *exp) {
     if (exp == NULL) {
         return;
@@ -598,6 +718,35 @@ void free_exp(Exp *exp) {
             free_exp(exp->let_rec_exp->exp_1);
             free_exp(exp->let_rec_exp->exp_2);
             free(exp->let_rec_exp);
+            free(exp);
+            return;
+        }
+        case NIL_EXP: {
+            free(exp);
+            return;
+        }
+        case CONS_EXP: {
+            if (exp->cons_exp == NULL) {
+                free(exp);
+                return;
+            }
+
+            free_exp(exp->cons_exp->exp_elem);
+            free_exp(exp->cons_exp->exp_list);
+            free(exp);
+            return;
+        }
+        case MATCH_EXP: {
+            if (exp->match_exp == NULL) {
+                free(exp);
+                return;
+            }
+
+            free_exp(exp->match_exp->exp_list);
+            free_exp(exp->match_exp->exp_match_nil);
+            free_var(exp->match_exp->var_elem);
+            free_var(exp->match_exp->var_list);
+            free_exp(exp->match_exp->exp_match_cons);
             free(exp);
             return;
         }
@@ -991,6 +1140,145 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
             free_value(rec_closure_value);
 
             return value;
+        }
+        case NIL_EXP: {
+            Value *value = malloc(sizeof(Value));
+            value->type = NIL_VALUE;
+            return value;
+        }
+        case CONS_EXP: {
+            if (exp->cons_exp == NULL) {
+                return NULL;
+            }
+
+            const Exp *exp_elem = exp->cons_exp->exp_elem;
+            if (exp_elem == NULL) {
+                return NULL;
+            }
+
+            const Exp *exp_list = exp->cons_exp->exp_list;
+            if (exp_list == NULL) {
+                return NULL;
+            }
+
+            Value *value_elem = evaluate_impl(env, exp_elem);
+            if (value_elem == NULL) {
+                return NULL;
+            }
+
+            Value *value_list = evaluate_impl(env, exp_list);
+            if (value_list == NULL) {
+                free_value(value_elem);
+                return NULL;
+            }
+
+            Value *value = malloc(sizeof(Value));
+            value->type = CONS_VALUE;
+            value->cons_value = create_cons(value_elem, value_list);
+            return value;
+        }
+        case MATCH_EXP: {
+            if (exp->match_exp == NULL) {
+                return NULL;
+            }
+
+            const Exp *exp_list = exp->match_exp->exp_list;
+            if (exp_list == NULL) {
+                return NULL;
+            }
+
+            Value *value_list = evaluate_impl(env, exp_list);
+            if (value_list == NULL) {
+                return NULL;
+            }
+
+            switch (value_list->type) {
+                case NIL_VALUE: {
+                    const Exp *exp_match_nil = exp->match_exp->exp_match_nil;
+                    if (exp_match_nil == NULL) {
+                        free_value(value_list);
+                        return NULL;
+                    }
+
+                    Value *value_nil = evaluate_impl(env, exp_match_nil);
+                    if (value_nil == NULL) {
+                        free_value(value_list);
+                        return NULL;
+                    }
+
+                    free_value(value_list);
+                    return value_nil;
+                }
+                case CONS_VALUE: {
+                    Cons *cons_value = value_list->cons_value;
+                    if (cons_value == NULL) {
+                        free_value(value_list);
+                        return NULL;
+                    }
+
+                    Value *value_elem = create_copied_value(cons_value->value_elem);
+                    if (value_elem == NULL) {
+                        free_value(value_list);
+                        return NULL;
+                    }
+
+                    Value *value_subsequent_list = create_copied_value(cons_value->value_list);
+                    if (value_list == NULL) {
+                        free_value(value_elem);
+                        free_value(value_list);
+                        return NULL;
+                    }
+
+                    const Exp *exp_match_cons = exp->match_exp->exp_match_cons;
+                    if (exp_match_cons == NULL) {
+                        free_value(value_subsequent_list);
+                        free_value(value_elem);
+                        free_value(value_list);
+                        return NULL;
+                    }
+
+                    Env *env_temp = create_appended_env(
+                        env,
+                        exp->match_exp->var_elem,
+                        value_elem
+                    );
+                    if (env_temp == NULL) {
+                        free_value(value_subsequent_list);
+                        free_value(value_elem);
+                        free_value(value_list);
+                    }
+
+                    Env *env_new = create_appended_env(
+                        env_temp,
+                        exp->match_exp->var_list,
+                        value_subsequent_list
+                    );
+                    free_env(env_temp);
+                    if (env_new == NULL) {
+                        free_value(value_subsequent_list);
+                        free_value(value_elem);
+                        free_value(value_list);
+                    }
+
+                    Value *value_cons = evaluate_impl(env_new, exp_match_cons);
+                    if (value_cons == NULL) {
+                        free_value(value_subsequent_list);
+                        free_value(value_elem);
+                        free_value(value_list);
+                        return NULL;
+                    }
+
+                    free_env(env_new);
+                    free_value(value_subsequent_list);
+                    free_value(value_elem);
+                    free_value(value_list);
+                    return value_cons;
+                }
+                default: {
+                    free_value(value_list);
+                    return NULL;
+                }
+            }
         }
         default:
             return NULL;
@@ -2812,6 +3100,23 @@ bool fprint_rec_closure(FILE *fp, const RecClosure *rec_closure) {
     return true;
 }
 
+bool fprint_cons(FILE *fp, const Cons *cons) {
+    if (cons == NULL) {
+        return false;
+    }
+
+    fprintf(fp, "(");
+    if (!fprint_value(fp, cons->value_elem)) {
+        return false;
+    }
+    fprintf(fp, " :: ");
+    if (!fprint_value(fp, cons->value_list)) {
+        return false;
+    }
+    fprintf(fp, ")");
+    return true;
+}
+
 bool fprint_value(FILE *fp, const Value *value) {
     if (fp == NULL || value == NULL) {
         return false;
@@ -2839,6 +3144,17 @@ bool fprint_value(FILE *fp, const Value *value) {
             }
 
             return fprint_rec_closure(fp, value->rec_closure_value);
+        }
+        case NIL_VALUE: {
+            fprintf(fp, "[]");
+            return true;
+        }
+        case CONS_VALUE: {
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            return fprint_cons(fp, value->cons_value);
         }
         default:
             return false;
@@ -3069,6 +3385,63 @@ bool fprint_exp(FILE *fp, const Exp *exp) {
             }
             fprintf(fp, " in ");
             if (!fprint_exp(fp, exp_2)) {
+                return false;
+            }
+            fprintf(fp, ")");
+            return true;
+        }
+        case NIL_EXP: {
+            fprintf(fp, "[]");
+            return true;
+        }
+        case CONS_EXP: {
+            if (exp->cons_exp == NULL) {
+                return false;
+            }
+
+            Exp *exp_elem = exp->cons_exp->exp_elem;
+            Exp *exp_list = exp->cons_exp->exp_list;
+
+            fprintf(fp, "(");
+            if (!fprint_exp(fp, exp_elem)) {
+                return false;
+            }
+            fprintf(fp, " :: ");
+            if (!fprint_exp(fp, exp_list)) {
+                return false;
+            }
+            fprintf(fp, ")");
+            return true;
+        }
+        case MATCH_EXP: {
+            if (exp->match_exp == NULL) {
+                return false;
+            }
+
+            Exp *exp_list = exp->match_exp->exp_list;
+            Exp *exp_match_nil = exp->match_exp->exp_match_nil;
+            Var *var_elem = exp->match_exp->var_elem;
+            Var *var_list = exp->match_exp->var_list;
+            Exp *exp_match_cons = exp->match_exp->exp_match_cons;
+
+            fprintf(fp, "(match ");
+            if (!fprint_exp(fp, exp_list)) {
+                return false;
+            }
+            fprintf(fp, " with [] -> ");
+            if (!fprint_exp(fp, exp_match_nil)) {
+                return false;
+            }
+            fprintf(fp, " | ");
+            if (!fprint_var(fp, var_elem)) {
+                return false;
+            }
+            fprintf(fp, " :: ");
+            if (!fprint_var(fp, var_list)) {
+                return false;
+            }
+            fprintf(fp, " -> ");
+            if (!fprint_exp(fp, exp_match_cons)) {
                 return false;
             }
             fprintf(fp, ")");
