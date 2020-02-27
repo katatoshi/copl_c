@@ -269,8 +269,9 @@ Value *create_copied_value(const Value *value) {
 
             return create_cons_value(create_copied_cons(value->cons_value));
         }
-        default:
+        default: {
             return NULL;
+        }
     }
 }
 
@@ -322,8 +323,9 @@ void free_value(Value *value) {
             free(value);
             break;
         }
-        default:
+        default: {
             free(value);
+        }
     }
 }
 
@@ -457,6 +459,10 @@ Exp *create_var_exp(Var *var) {
 }
 
 Exp *create_plus_op_exp(Exp *exp_left, Exp *exp_right) {
+    if (exp_left == NULL || exp_right == NULL) {
+        return NULL;
+    }
+
     OpExp *op_exp = malloc(sizeof(OpExp));
     op_exp->type = PLUS_OP_EXP;
     op_exp->exp_left = exp_left;
@@ -470,6 +476,10 @@ Exp *create_plus_op_exp(Exp *exp_left, Exp *exp_right) {
 }
 
 Exp *create_minus_op_exp(Exp *exp_left, Exp *exp_right) {
+    if (exp_left == NULL || exp_right == NULL) {
+        return NULL;
+    }
+
     OpExp *op_exp = malloc(sizeof(OpExp));
     op_exp->type = MINUS_OP_EXP;
     op_exp->exp_left = exp_left;
@@ -483,6 +493,10 @@ Exp *create_minus_op_exp(Exp *exp_left, Exp *exp_right) {
 }
 
 Exp *create_times_op_exp(Exp *exp_left, Exp *exp_right) {
+    if (exp_left == NULL || exp_right == NULL) {
+        return NULL;
+    }
+
     OpExp *op_exp = malloc(sizeof(OpExp));
     op_exp->type = TIMES_OP_EXP;
     op_exp->exp_left = exp_left;
@@ -496,6 +510,10 @@ Exp *create_times_op_exp(Exp *exp_left, Exp *exp_right) {
 }
 
 Exp *create_lt_op_exp(Exp *exp_left, Exp *exp_right) {
+    if (exp_left == NULL || exp_right == NULL) {
+        return NULL;
+    }
+
     OpExp *op_exp = malloc(sizeof(OpExp));
     op_exp->type = LT_OP_EXP;
     op_exp->exp_left = exp_left;
@@ -509,6 +527,10 @@ Exp *create_lt_op_exp(Exp *exp_left, Exp *exp_right) {
 }
 
 Exp *create_if_exp(Exp *exp_cond, Exp *exp_true, Exp *exp_false) {
+    if (exp_cond == NULL || exp_true == NULL || exp_false == NULL) {
+        return NULL;
+    }
+
     IfExp *if_exp = malloc(sizeof(IfExp));
     if_exp->exp_cond = exp_cond;
     if_exp->exp_true = exp_true;
@@ -522,6 +544,10 @@ Exp *create_if_exp(Exp *exp_cond, Exp *exp_true, Exp *exp_false) {
 }
 
 Exp *create_let_exp(Var *var, Exp *exp_1, Exp *exp_2) {
+    if (var == NULL || exp_1 == NULL || exp_2 == NULL) {
+        return NULL;
+    }
+
     LetExp *let_exp = malloc(sizeof(LetExp));
     let_exp->var = var;
     let_exp->exp_1 = exp_1;
@@ -535,6 +561,10 @@ Exp *create_let_exp(Var *var, Exp *exp_1, Exp *exp_2) {
 }
 
 Exp *create_fun_exp(Var *var, Exp *exp) {
+    if (var == NULL || exp == NULL) {
+        return NULL;
+    }
+
     FunExp *fun_exp = malloc(sizeof(FunExp));
     fun_exp->var = var;
     fun_exp->exp = exp;
@@ -547,6 +577,10 @@ Exp *create_fun_exp(Var *var, Exp *exp) {
 }
 
 Exp *create_app_exp(Exp *exp_1, Exp *exp_2) {
+    if (exp_1 == NULL || exp_2 == NULL) {
+        return NULL;
+    }
+
     AppExp *app_exp = malloc(sizeof(AppExp));
     app_exp->exp_1 = exp_1;
     app_exp->exp_2 = exp_2;
@@ -559,6 +593,10 @@ Exp *create_app_exp(Exp *exp_1, Exp *exp_2) {
 }
 
 Exp *create_let_rec_exp(Var *var_rec, Var *var, Exp *exp_1, Exp *exp_2) {
+    if (var_rec == NULL || exp_1 == NULL || exp_2 == NULL) {
+        return NULL;
+    }
+
     LetRecExp *let_rec_exp = malloc(sizeof(LetRecExp));
     let_rec_exp->var_rec = var_rec;
     let_rec_exp->var = var;
@@ -580,6 +618,10 @@ Exp *create_nil_exp() {
 }
 
 Exp *create_cons_exp(Exp *exp_elem, Exp *exp_list) {
+    if (exp_elem == NULL || exp_list == NULL) {
+        return NULL;
+    }
+
     ConsExp *cons_exp = malloc(sizeof(ConsExp));
     cons_exp->exp_elem = exp_elem;
     cons_exp->exp_list = exp_list;
@@ -591,7 +633,11 @@ Exp *create_cons_exp(Exp *exp_elem, Exp *exp_list) {
     return exp;
 }
 
-Exp *create_match_exp(Exp *exp_list, Exp *exp_match_nil, Var *var_elem, Var *var_list, Exp *exp_match_cons) {
+Exp *create_match_exp(Exp *exp_list,
+                      Exp *exp_match_nil,
+                      Var *var_elem,
+                      Var *var_list,
+                      Exp *exp_match_cons) {
     if (exp_list == NULL
         || exp_match_nil == NULL
         || var_elem == NULL
@@ -882,8 +928,9 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
                     free_value(value_right);
                     return value;
                 }
-                default:
+                default: {
                     return NULL;
+                }
             }
         }
         case IF_EXP: {
@@ -1282,8 +1329,9 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
                 }
             }
         }
-        default:
+        default: {
             return NULL;
+        }
     }
 }
 
@@ -1478,8 +1526,9 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value) {
             *int_value = value->int_value;
             return true;
         }
-        default:
+        default: {
             return false;
+        }
     }
 }
 
@@ -1658,8 +1707,9 @@ bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value
             *bool_value = value->bool_value;
             return true;
         }
-        default:
+        default: {
             return false;
+        }
     }
 }
 
@@ -1905,12 +1955,14 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
 
             return true;
         }
-        default:
+        default: {
             return false;
+        }
     }
 }
 
-bool try_get_rec_closure_value_from_derivation(Derivation *derivation, RecClosure *rec_closure_value) {
+bool try_get_rec_closure_value_from_derivation(Derivation *derivation,
+                                               RecClosure *rec_closure_value) {
     if (derivation == NULL) {
         return false;
     }
@@ -2136,8 +2188,9 @@ bool try_get_rec_closure_value_from_derivation(Derivation *derivation, RecClosur
 
             return true;
         }
-        default:
+        default: {
             return false;
+        }
     }
 }
 
@@ -2383,8 +2436,9 @@ bool try_get_cons_value_from_derivation(Derivation *derivation, Cons *cons_value
 
             return true;
         }
-        default:
+        default: {
             return false;
+        }
     }
 }
 
@@ -2507,7 +2561,9 @@ Value *create_value_from_derivation(Derivation *derivation) {
                 return NULL;
             }
 
-            return create_cons_value(create_copied_cons(derivation->cons_derivation->cons_value));
+            return create_cons_value(
+                create_copied_cons(derivation->cons_derivation->cons_value)
+            );
         }
         case MATCH_NIL_DERIVATION: {
             if (derivation->match_nil_derivation == NULL) {
@@ -2523,8 +2579,9 @@ Value *create_value_from_derivation(Derivation *derivation) {
 
             return create_copied_value(derivation->match_cons_derivation->value);
         }
-        default:
+        default: {
             return NULL;
+        }
     }
 }
 
@@ -3335,7 +3392,9 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
                         return NULL;
                     }
 
-                    MatchConsDerivation *match_cons_derivation = malloc(sizeof(MatchConsDerivation));
+                    MatchConsDerivation *match_cons_derivation = malloc(
+                        sizeof(MatchConsDerivation)
+                    );
                     match_cons_derivation->premise_list = premise_list;
                     match_cons_derivation->premise_match_cons = premise_match_cons;
                     match_cons_derivation->match_exp = exp->match_exp;
@@ -3359,8 +3418,9 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
                 }
             }
         }
-        default:
+        default: {
             return NULL;
+        }
     }
 }
 
@@ -3723,8 +3783,9 @@ bool fprint_value(FILE *fp, const Value *value) {
 
             return fprint_cons(fp, value->cons_value);
         }
-        default:
+        default: {
             return false;
+        }
     }
 }
 
@@ -4014,8 +4075,9 @@ bool fprint_exp(FILE *fp, const Exp *exp) {
             fprintf(fp, ")");
             return true;
         }
-        default:
+        default: {
             return false;
+        }
     }
 }
 
@@ -4197,7 +4259,9 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
-            fprintf(fp, " evalto %s by E-Bool {}", derivation->bool_derivation->bool_value ? "true" : "false");
+            fprintf(fp,
+                    " evalto %s by E-Bool {}",
+                    derivation->bool_derivation->bool_value ? "true" : "false");
             if (level == 0) {
                 fprintf(fp, "\n");
             }
@@ -4425,7 +4489,9 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
 
-            fprintf(fp, " evalto %s by E-Lt {\n", derivation->lt_derivation->bool_value ? "true" : "false");
+            fprintf(fp,
+                    " evalto %s by E-Lt {\n",
+                    derivation->lt_derivation->bool_value ? "true" : "false");
             if (!fprint_derivation_impl(fp, premise_left, level + 1)) {
                 return false;
             }
@@ -4838,7 +4904,9 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
             fprintf(fp, ";\n");
-            if (!fprint_derivation_impl(fp, match_nil_derivation->premise_match_nil, level + 1)) {
+            if (!fprint_derivation_impl(fp,
+                                        match_nil_derivation->premise_match_nil,
+                                        level + 1)) {
                 return false;
             }
             fprintf(fp, "\n");
@@ -4881,7 +4949,9 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
                 return false;
             }
             fprintf(fp, ";\n");
-            if (!fprint_derivation_impl(fp, match_cons_derivation->premise_match_cons, level + 1)) {
+            if (!fprint_derivation_impl(fp,
+                                        match_cons_derivation->premise_match_cons,
+                                        level + 1)) {
                 return false;
             }
             fprintf(fp, "\n");
@@ -4892,7 +4962,8 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             }
             return true;
         }
-        default:
+        default: {
             return false;
+        }
     }
 }
