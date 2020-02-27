@@ -190,11 +190,6 @@ typedef struct {
     bool bool_value;
 } BoolDerivation;
 
-typedef struct {
-    FunExp *fun_exp;
-    Closure *closure_value;
-} FunDerivation;
-
 typedef struct Var1DerivationTag Var1Derivation;
 
 typedef struct Var2DerivationTag Var2Derivation;
@@ -217,7 +212,18 @@ typedef struct AppDerivationTag AppDerivation;
 
 typedef struct LetRecDerivationTag LetRecDerivation;
 
+typedef struct {
+    FunExp *fun_exp;
+    Closure *closure_value;
+} FunDerivation;
+
 typedef struct AppRecDerivationTag AppRecDerivation;
+
+typedef struct ConsDerivationTag ConsDerivation;
+
+typedef struct MatchNilDerivationTag MatchNilDerivation;
+
+typedef struct MatchConsDerivationTag MatchConsDerivation;
 
 typedef enum {
     INT_DERIVATION,
@@ -234,7 +240,11 @@ typedef enum {
     FUN_DERIVATION,
     APP_DERIVATION,
     LET_REC_DERIVATION,
-    APP_REC_DERIVATION
+    APP_REC_DERIVATION,
+    NIL_DERIVATION,
+    CONS_DERIVATION,
+    MATCH_NIL_DERIVATION,
+    MATCH_CONS_DERIVATION
 } DerivationType;
 
 typedef struct {
@@ -256,6 +266,9 @@ typedef struct {
         AppDerivation *app_derivation;
         LetRecDerivation *let_rec_derivation;
         AppRecDerivation *app_rec_derivation;
+        ConsDerivation *cons_derivation;
+        MatchNilDerivation *match_nil_derivation;
+        MatchConsDerivation *match_cons_derivation;
     };
 } Derivation;
 
@@ -341,6 +354,27 @@ struct AppRecDerivationTag {
     Value *value;
 };
 
+struct ConsDerivationTag {
+    Derivation *premise_elem;
+    Derivation *premise_list;
+    ConsExp *cons_exp;
+    Cons *cons_value;
+};
+
+struct MatchNilDerivationTag {
+    Derivation *premise_list;
+    Derivation *premise_match_nil;
+    MatchExp *match_exp;
+    Value *value;
+};
+
+struct MatchConsDerivationTag {
+    Derivation *premise_list;
+    Derivation *premise_match_cons;
+    MatchExp *match_exp;
+    Value *value;
+};
+
 Var *create_var(const char *src_name);
 
 Var *create_copied_var(const Var *var);
@@ -375,7 +409,7 @@ Value *create_rec_closure_value(RecClosure *rec_closure);
 
 Value *create_nil_value();
 
-Cons *create_cons(Value *value_elem, Value *value_list);
+Cons *create_cons(const Value *value_elem, const Value *value_list);
 
 Cons *create_copied_cons(const Cons *cons);
 
@@ -441,6 +475,8 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
 
 bool try_get_rec_closure_value_from_derivation(Derivation *derivation, RecClosure *rec_closure_value);
 
+bool try_get_cons_value_from_derivation(Derivation *derivation, Cons *cons_value);
+
 Value *create_value_from_derivation(Derivation *derivation);
 
 Derivation *derive(Exp *exp);
@@ -483,9 +519,9 @@ bool fprint_let_rec_exp(FILE *fp, LetRecExp *exp);
 
 bool fprint_nil_exp(FILE *fp);
 
-bool fprint_cons_exp(FILE fp, ConsExp *exp);
+bool fprint_cons_exp(FILE *fp, ConsExp *exp);
 
-bool fprint_match_exp(FILE fp, MatchExp *exp);
+bool fprint_match_exp(FILE *fp, MatchExp *exp);
 
 void fprint_indent(FILE *fp, const int level);
 

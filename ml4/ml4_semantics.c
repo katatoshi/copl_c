@@ -189,14 +189,14 @@ Value *create_nil_value() {
     return value;
 }
 
-Cons *create_cons(Value *value_elem, Value *value_list) {
+Cons *create_cons(const Value *value_elem, const Value *value_list) {
     if (value_elem == NULL || value_list == NULL) {
         return NULL;
     }
 
     Cons *cons = malloc(sizeof(Cons));
-    cons->value_elem = value_elem;
-    cons->value_list = value_list;
+    cons->value_elem = create_copied_value(value_elem);
+    cons->value_list = create_copied_value(value_list);
     return cons;
 }
 
@@ -1175,6 +1175,8 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
             Value *value = malloc(sizeof(Value));
             value->type = CONS_VALUE;
             value->cons_value = create_cons(value_elem, value_list);
+            free_value(value_elem);
+            free_value(value_list);
             return value;
         }
         case MATCH_EXP: {
@@ -1459,6 +1461,40 @@ bool try_get_int_value_from_derivation(Derivation *derivation, int *int_value) {
             *int_value = value->int_value;
             return true;
         }
+        case MATCH_NIL_DERIVATION: {
+            if (derivation->match_nil_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->match_nil_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != INT_VALUE) {
+                return false;
+            }
+
+            *int_value = value->int_value;
+            return true;
+        }
+        case MATCH_CONS_DERIVATION: {
+            if (derivation->match_cons_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->match_cons_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != INT_VALUE) {
+                return false;
+            }
+
+            *int_value = value->int_value;
+            return true;
+        }
         default:
             return false;
     }
@@ -1611,6 +1647,40 @@ bool try_get_bool_value_from_derivation(Derivation *derivation, bool *bool_value
             }
 
             Value *value = derivation->app_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != BOOL_VALUE) {
+                return false;
+            }
+
+            *bool_value = value->bool_value;
+            return true;
+        }
+        case MATCH_NIL_DERIVATION: {
+            if (derivation->match_nil_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->match_nil_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != BOOL_VALUE) {
+                return false;
+            }
+
+            *bool_value = value->bool_value;
+            return true;
+        }
+        case MATCH_CONS_DERIVATION: {
+            if (derivation->match_cons_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->match_cons_derivation->value;
             if (value == NULL) {
                 return false;
             }
@@ -1845,6 +1915,54 @@ bool try_get_closure_value_from_derivation(Derivation *derivation, Closure *clos
 
             return true;
         }
+        case MATCH_NIL_DERIVATION: {
+            if (derivation->match_nil_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->match_nil_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case MATCH_CONS_DERIVATION: {
+            if (derivation->match_cons_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->match_cons_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_closure(closure_value, value->closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
         default:
             return false;
     }
@@ -2052,6 +2170,325 @@ bool try_get_rec_closure_value_from_derivation(Derivation *derivation, RecClosur
 
             return true;
         }
+        case MATCH_NIL_DERIVATION: {
+            if (derivation->match_nil_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->match_nil_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != REC_CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->rec_closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_rec_closure(rec_closure_value, value->rec_closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case MATCH_CONS_DERIVATION: {
+            if (derivation->match_cons_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->match_cons_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != REC_CLOSURE_VALUE) {
+                return false;
+            }
+
+            if (value->rec_closure_value == NULL) {
+                return false;
+            }
+
+            if (!copy_rec_closure(rec_closure_value, value->rec_closure_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
+bool try_get_cons_value_from_derivation(Derivation *derivation, Cons *cons_value) {
+    if (derivation == NULL) {
+        return false;
+    }
+
+    if (cons_value == NULL) {
+        return false;
+    }
+
+    switch (derivation->type) {
+        case VAR_1_DERIVATION: {
+            if (derivation->var_1_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->var_1_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CONS_VALUE) {
+                return false;
+            }
+
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, value->cons_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case VAR_2_DERIVATION: {
+            if (derivation->var_2_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->var_2_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CONS_VALUE) {
+                return false;
+            }
+
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, value->cons_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case IF_TRUE_DERIVATION: {
+            if (derivation->if_true_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->if_true_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CONS_VALUE) {
+                return false;
+            }
+
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, value->cons_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case IF_FALSE_DERIVATION: {
+            if (derivation->if_false_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->if_false_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CONS_VALUE) {
+                return false;
+            }
+
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, value->cons_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case LET_DERIVATION: {
+            if (derivation->let_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->let_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CONS_VALUE) {
+                return false;
+            }
+
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, value->cons_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case APP_DERIVATION: {
+            if (derivation->app_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->app_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CONS_VALUE) {
+                return false;
+            }
+
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, value->cons_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case LET_REC_DERIVATION: {
+            if (derivation->let_rec_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->let_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CONS_VALUE) {
+                return false;
+            }
+
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, value->cons_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case APP_REC_DERIVATION: {
+            if (derivation->app_rec_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->app_rec_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CONS_VALUE) {
+                return false;
+            }
+
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, value->cons_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case CONS_DERIVATION: {
+            if (derivation->cons_derivation == NULL) {
+                return false;
+            }
+
+            Cons *cons = derivation->cons_derivation->cons_value;
+            if (cons == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, cons)) {
+                return false;
+            }
+
+            return true;
+        }
+        case MATCH_NIL_DERIVATION: {
+            if (derivation->match_nil_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->match_nil_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CONS_VALUE) {
+                return false;
+            }
+
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, value->cons_value)) {
+                return false;
+            }
+
+            return true;
+        }
+        case MATCH_CONS_DERIVATION: {
+            if (derivation->match_cons_derivation == NULL) {
+                return false;
+            }
+
+            Value *value = derivation->match_cons_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            if (value->type != CONS_VALUE) {
+                return false;
+            }
+
+            if (value->cons_value == NULL) {
+                return false;
+            }
+
+            if (!copy_cons(cons_value, value->cons_value)) {
+                return false;
+            }
+
+            return true;
+        }
         default:
             return false;
     }
@@ -2174,6 +2611,30 @@ Value *create_value_from_derivation(Derivation *derivation) {
             }
 
             return create_copied_value(derivation->app_rec_derivation->value);
+        }
+        case NIL_DERIVATION: {
+            return create_nil_value();
+        }
+        case CONS_DERIVATION: {
+            if (derivation->cons_derivation == NULL) {
+                return NULL;
+            }
+
+            return create_cons_value(create_copied_cons(derivation->cons_derivation->cons_value));
+        }
+        case MATCH_NIL_DERIVATION: {
+            if (derivation->match_nil_derivation == NULL) {
+                return NULL;
+            }
+
+            return create_copied_value(derivation->match_nil_derivation->value);
+        }
+        case MATCH_CONS_DERIVATION: {
+            if (derivation->match_cons_derivation == NULL) {
+                return NULL;
+            }
+
+            return create_copied_value(derivation->match_cons_derivation->value);
         }
         default:
             return NULL;
@@ -2820,6 +3281,225 @@ Derivation *derive_impl(const Env *env, Exp *exp) {
 
             return derivation;
         }
+        case NIL_EXP: {
+            Derivation *derivation = malloc(sizeof(Derivation));
+            derivation->type = NIL_DERIVATION;
+            derivation->env = create_copied_env(env);
+            return derivation;
+        }
+        case CONS_EXP: {
+            if (exp->cons_exp == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_elem = exp->cons_exp->exp_elem;
+            if (exp_elem == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_list = exp->cons_exp->exp_list;
+            if (exp_list == NULL) {
+                return NULL;
+            }
+
+            Derivation *premise_elem = derive_impl(env, exp_elem);
+            if (premise_elem == NULL) {
+                return NULL;
+            }
+
+            Value *value_elem = create_value_from_derivation(premise_elem);
+            if (value_elem == NULL) {
+                free_derivation(premise_elem);
+                return NULL;
+            }
+
+            Derivation *premise_list = derive_impl(env, exp_list);
+            if (premise_list == NULL) {
+                free_value(value_elem);
+                free_derivation(premise_elem);
+                return NULL;
+            }
+
+            Value *value_list = create_value_from_derivation(premise_list);
+            if (value_list == NULL) {
+                free_derivation(premise_list);
+                free_value(value_elem);
+                free_derivation(premise_elem);
+                return NULL;
+            }
+
+            ConsDerivation *cons_derivation = malloc(sizeof(ConsDerivation));
+            cons_derivation->premise_elem = premise_elem;
+            cons_derivation->premise_list = premise_list;
+            cons_derivation->cons_exp = exp->cons_exp;
+            cons_derivation->cons_value = create_cons(value_elem, value_list);
+
+            Derivation *derivation = malloc(sizeof(Derivation));
+            derivation->type = CONS_DERIVATION;
+            derivation->env = create_copied_env(env);
+            derivation->cons_derivation = cons_derivation;
+
+            free_value(value_list);
+            free_value(value_elem);
+
+            return derivation;
+        }
+        case MATCH_EXP: {
+            if (exp->match_exp == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_list = exp->match_exp->exp_list;
+            if (exp_list == NULL) {
+                return NULL;
+            }
+
+            Derivation *premise_list = derive_impl(env, exp_list);
+            if (premise_list == NULL) {
+                return NULL;
+            }
+
+            Value *value_list = create_value_from_derivation(premise_list);
+            if (value_list == NULL) {
+                free_derivation(premise_list);
+                return NULL;
+            }
+
+            switch (value_list->type) {
+                case NIL_VALUE: {
+                    Exp *exp_match_nil = exp->match_exp->exp_match_nil;
+                    if (exp_match_nil == NULL) {
+                        free_derivation(premise_list);
+                        return NULL;
+                    }
+
+                    Derivation *premise_match_nil = derive_impl(env, exp_match_nil);
+                    if (premise_match_nil == NULL) {
+                        free_derivation(premise_list);
+                        return NULL;
+                    }
+
+                    Value *value_match_nil = create_value_from_derivation(premise_match_nil);
+                    if (value_match_nil == NULL) {
+                        free_derivation(premise_match_nil);
+                        free_derivation(premise_list);
+                        return NULL;
+                    }
+
+                    MatchNilDerivation *match_nil_derivation = malloc(sizeof(MatchNilDerivation));
+                    match_nil_derivation->premise_list = premise_list;
+                    match_nil_derivation->premise_match_nil = premise_match_nil;
+                    match_nil_derivation->match_exp = exp->match_exp;
+                    match_nil_derivation->value = value_match_nil;
+
+                    Derivation *derivation = malloc(sizeof(Derivation));
+                    derivation->type = MATCH_NIL_DERIVATION;
+                    derivation->env = create_copied_env(env);
+                    derivation->match_nil_derivation = match_nil_derivation;
+                    return derivation;
+                }
+                case CONS_VALUE: {
+                    Cons *cons_value = value_list->cons_value;
+                    if (cons_value == NULL) {
+                        free_value(value_list);
+                        free_derivation(premise_list);
+                        return NULL;
+                    }
+
+                    Value *value_elem = create_copied_value(cons_value->value_elem);
+                    if (value_elem == NULL) {
+                        free_value(value_list);
+                        free_derivation(premise_list);
+                        return NULL;
+                    }
+
+                    Value *value_subsequent_list = create_copied_value(cons_value->value_list);
+                    if (value_list == NULL) {
+                        free_value(value_elem);
+                        free_value(value_list);
+                        free_derivation(premise_list);
+                        return NULL;
+                    }
+
+                    Exp *exp_match_cons = exp->match_exp->exp_match_cons;
+                    if (exp_match_cons == NULL) {
+                        free_value(value_subsequent_list);
+                        free_value(value_elem);
+                        free_value(value_list);
+                        free_derivation(premise_list);
+                        return NULL;
+                    }
+
+                    Env *env_temp = create_appended_env(
+                        env,
+                        exp->match_exp->var_elem,
+                        value_elem
+                    );
+                    if (env_temp == NULL) {
+                        free_value(value_subsequent_list);
+                        free_value(value_elem);
+                        free_value(value_list);
+                        free_derivation(premise_list);
+                    }
+
+                    Env *env_new = create_appended_env(
+                        env_temp,
+                        exp->match_exp->var_list,
+                        value_subsequent_list
+                    );
+                    free_env(env_temp);
+                    if (env_new == NULL) {
+                        free_value(value_subsequent_list);
+                        free_value(value_elem);
+                        free_value(value_list);
+                        free_derivation(premise_list);
+                    }
+
+                    Derivation *premise_match_cons = derive_impl(env_new, exp_match_cons);
+                    if (premise_match_cons == NULL) {
+                        free_env(env_new);
+                        free_value(value_subsequent_list);
+                        free_value(value_elem);
+                        free_value(value_list);
+                        free_derivation(premise_list);
+                        return NULL;
+                    }
+
+                    Value *value_cons = create_value_from_derivation(premise_match_cons);
+                    if (value_cons == NULL) {
+                        free_derivation(premise_match_cons);
+                        free_env(env_new);
+                        free_value(value_subsequent_list);
+                        free_value(value_elem);
+                        free_value(value_list);
+                        free_derivation(premise_list);
+                        return NULL;
+                    }
+
+                    MatchConsDerivation *match_cons_derivation = malloc(sizeof(MatchConsDerivation));
+                    match_cons_derivation->premise_list = premise_list;
+                    match_cons_derivation->premise_match_cons = premise_match_cons;
+                    match_cons_derivation->match_exp = exp->match_exp;
+                    match_cons_derivation->value = value_cons;
+
+                    Derivation *derivation = malloc(sizeof(Derivation));
+                    derivation->type = MATCH_CONS_DERIVATION;
+                    derivation->env = create_copied_env(env);
+                    derivation->match_cons_derivation = match_cons_derivation;
+
+                    free_env(env_new);
+                    free_value(value_subsequent_list);
+                    free_value(value_elem);
+                    free_value(value_list);
+
+                    return derivation;
+                }
+                default: {
+                    free_derivation(premise_list);
+                    return NULL;
+                }
+            }
+        }
         default:
             return NULL;
     }
@@ -3030,6 +3710,48 @@ void free_derivation(Derivation *derivation) {
             free_derivation(derivation->app_rec_derivation->premise_3);
             free_value(derivation->app_rec_derivation->value);
             free(derivation->app_rec_derivation);
+            free_env(derivation->env);
+            free(derivation);
+            return;
+        }
+        case CONS_DERIVATION: {
+            if (derivation->cons_derivation == NULL) {
+                free_env(derivation->env);
+                free(derivation);
+                return;
+            }
+
+            free_derivation(derivation->cons_derivation->premise_elem);
+            free_derivation(derivation->cons_derivation->premise_list);
+            free_cons(derivation->cons_derivation->cons_value);
+            free_env(derivation->env);
+            free(derivation);
+            return;
+        }
+        case MATCH_NIL_DERIVATION: {
+            if (derivation->match_nil_derivation == NULL) {
+                free_env(derivation->env);
+                free(derivation);
+                return;
+            }
+
+            free_derivation(derivation->match_nil_derivation->premise_list);
+            free_derivation(derivation->match_nil_derivation->premise_match_nil);
+            free_value(derivation->match_nil_derivation->value);
+            free_env(derivation->env);
+            free(derivation);
+            return;
+        }
+        case MATCH_CONS_DERIVATION: {
+            if (derivation->match_cons_derivation == NULL) {
+                free_env(derivation->env);
+                free(derivation);
+                return;
+            }
+
+            free_derivation(derivation->match_cons_derivation->premise_list);
+            free_derivation(derivation->match_cons_derivation->premise_match_cons);
+            free_value(derivation->match_cons_derivation->value);
             free_env(derivation->env);
             free(derivation);
             return;
@@ -3548,6 +4270,28 @@ bool fprint_let_rec_exp(FILE *fp, LetRecExp *let_rec_exp) {
     Exp exp;
     exp.type = LET_REC_EXP;
     exp.let_rec_exp = let_rec_exp;
+    return fprint_exp(fp, &exp);
+}
+
+bool fprint_cons_exp(FILE *fp, ConsExp *cons_exp) {
+    if (fp == NULL || cons_exp == NULL) {
+        return false;
+    }
+
+    Exp exp;
+    exp.type = CONS_EXP;
+    exp.cons_exp = cons_exp;
+    return fprint_exp(fp, &exp);
+}
+
+bool fprint_match_exp(FILE *fp, MatchExp *match_exp) {
+    if (fp == NULL || match_exp == NULL) {
+        return false;
+    }
+
+    Exp exp;
+    exp.type = MATCH_EXP;
+    exp.match_exp = match_exp;
     return fprint_exp(fp, &exp);
 }
 
@@ -4184,6 +4928,157 @@ bool fprint_derivation_impl(FILE *fp, const Derivation *derivation, const int le
             }
             fprintf(fp, ";\n");
             if (!fprint_derivation_impl(fp, app_rec_derivation->premise_3, level + 1)) {
+                return false;
+            }
+            fprintf(fp, "\n");
+            fprint_indent(fp, level);
+            fprintf(fp, "}");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case NIL_DERIVATION: {
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- [] evalto [] by E-Nil {}");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case CONS_DERIVATION: {
+            if (derivation->cons_derivation == NULL) {
+                return false;
+            }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
+            if (!fprint_cons_exp(fp, derivation->cons_derivation->cons_exp)) {
+                return false;
+            }
+
+            Derivation *premise_elem = derivation->cons_derivation->premise_elem;
+
+            Value *value_elem = create_value_from_derivation(premise_elem);
+            if (value_elem == NULL) {
+                return false;
+            }
+
+            Derivation *premise_list = derivation->cons_derivation->premise_list;
+
+            Value *value_list = create_value_from_derivation(premise_list);
+            if (value_list == NULL) {
+                free_value(value_elem);
+                return false;
+            }
+
+            fprintf(fp, " evalto ");
+            if (!fprint_cons(fp, derivation->cons_derivation->cons_value)) {
+                return false;
+            }
+            fprintf(fp, " by E-Cons {\n");
+            if (!fprint_derivation_impl(fp, premise_elem, level + 1)) {
+                return false;
+            }
+            fprintf(fp, ";\n");
+            if (!fprint_derivation_impl(fp, premise_list, level + 1)) {
+                return false;
+            }
+            fprintf(fp, "\n");
+            fprint_indent(fp, level);
+            fprintf(fp, "}");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case MATCH_NIL_DERIVATION: {
+            MatchNilDerivation *match_nil_derivation = derivation->match_nil_derivation;
+            if (match_nil_derivation == NULL) {
+                return false;
+            }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
+            if (!fprint_match_exp(fp, match_nil_derivation->match_exp)) {
+                return false;
+            }
+
+            Value *value = match_nil_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            fprintf(fp, " evalto ");
+            if (!fprint_value(fp, value)) {
+                return false;
+            }
+            fprintf(fp, " by E-MatchNil {\n");
+            if (!fprint_derivation_impl(fp, match_nil_derivation->premise_list, level + 1)) {
+                return false;
+            }
+            fprintf(fp, ";\n");
+            if (!fprint_derivation_impl(fp, match_nil_derivation->premise_match_nil, level + 1)) {
+                return false;
+            }
+            fprintf(fp, "\n");
+            fprint_indent(fp, level);
+            fprintf(fp, "}");
+            if (level == 0) {
+                fprintf(fp, "\n");
+            }
+            return true;
+        }
+        case MATCH_CONS_DERIVATION: {
+            MatchConsDerivation *match_cons_derivation = derivation->match_cons_derivation;
+            if (match_cons_derivation == NULL) {
+                return false;
+            }
+
+            if (!fprint_env(fp, derivation->env)) {
+                return false;
+            }
+            if (derivation->env->var_binding != NULL) {
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "|- ");
+
+            if (!fprint_match_exp(fp, match_cons_derivation->match_exp)) {
+                return false;
+            }
+
+            Value *value = match_cons_derivation->value;
+            if (value == NULL) {
+                return false;
+            }
+
+            fprintf(fp, " evalto ");
+            if (!fprint_value(fp, value)) {
+                return false;
+            }
+            fprintf(fp, " by E-MatchCons {\n");
+            if (!fprint_derivation_impl(fp, match_cons_derivation->premise_list, level + 1)) {
+                return false;
+            }
+            fprintf(fp, ";\n");
+            if (!fprint_derivation_impl(fp, match_cons_derivation->premise_match_cons, level + 1)) {
                 return false;
             }
             fprintf(fp, "\n");
