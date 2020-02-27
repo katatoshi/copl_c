@@ -190,9 +190,7 @@ typedef struct {
     bool bool_value;
 } BoolDerivation;
 
-typedef struct Var1DerivationTag Var1Derivation;
-
-typedef struct Var2DerivationTag Var2Derivation;
+typedef struct VarDerivationTag VarDerivation;
 
 typedef struct PlusDerivationTag PlusDerivation;
 
@@ -228,8 +226,7 @@ typedef struct MatchConsDerivationTag MatchConsDerivation;
 typedef enum {
     INT_DERIVATION,
     BOOL_DERIVATION,
-    VAR_1_DERIVATION,
-    VAR_2_DERIVATION,
+    VAR_DERIVATION,
     PLUS_DERIVATION,
     MINUS_DERIVATION,
     TIMES_DERIVATION,
@@ -253,8 +250,7 @@ typedef struct {
     union {
         IntDerivation *int_derivation;
         BoolDerivation *bool_derivation;
-        Var1Derivation *var_1_derivation;
-        Var2Derivation *var_2_derivation;
+        VarDerivation *var_derivation;
         PlusDerivation *plus_derivation;
         MinusDerivation *minus_derivation;
         TimesDerivation *times_derivation;
@@ -272,13 +268,7 @@ typedef struct {
     };
 } Derivation;
 
-struct Var1DerivationTag {
-    VarExp *var_exp;
-    Value *value;
-};
-
-struct Var2DerivationTag {
-    Derivation *premise;
+struct VarDerivationTag {
     VarExp *var_exp;
     Value *value;
 };
