@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "ml4_semantics.h"
+#include "ml4_derivation.h"
 
 void test1(void) {
     Exp *exp1 = create_lt_op_exp(

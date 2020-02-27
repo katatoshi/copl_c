@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "ml4_semantics.h"
+#include "ml4_derivation.h"
 #include "y.tab.h"
 
 extern FILE *yyin;

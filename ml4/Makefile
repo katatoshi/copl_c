@@ -1,4 +1,4 @@
-ml4 : ml4_semantics.o y.tab.o lex.yy.o main.o
+ml4 : ml4_semantics.o ml4_derivation.o y.tab.o lex.yy.o main.o
 	gcc -o $@ $^
 
 run : ml4
@@ -10,7 +10,7 @@ y.tab.c : ml4.y
 lex.yy.c : ml4.l
 	lex -o $@ $^
 
-test : test_ml4_semantics.o ml4_semantics.o
+test : test_ml4_semantics.o ml4_semantics.o ml4_derivation.o
 	gcc -o $@ $^
 
 run_test : test
@@ -21,13 +21,15 @@ run_test : test
 
 ml4_semantics.o : ml4_semantics.h
 
-y.tab.o : ml4_semantics.h
+ml4_derivation.o : ml4_derivation.h
 
-lex.yy.o : ml4_semantics.h y.tab.h
+y.tab.o : ml4_semantics.h ml4_derivation.h
 
-main.o : ml4_semantics.h y.tab.h
+lex.yy.o : ml4_semantics.h ml4_derivation.h y.tab.h
 
-test_ml4_semantics.o : ml4_semantics.h
+main.o : ml4_semantics.h ml4_derivation.h y.tab.h
+
+test_ml4_semantics.o : ml4_semantics.h ml4_derivation.h
 
 clean :
 	rm -f ./ml4
