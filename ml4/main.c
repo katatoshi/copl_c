@@ -26,7 +26,14 @@ int main(int argc, char *argv[]) {
     }
 
     OutputType output_type = OUTPUT_VALUE;
+
     if (argc == 2) {
+        if (strlen(options[0]) != strlen(argv[1])) {
+            printf("unknown option: %s\n", argv[1]);
+            printf("usage: ml4 [--derivation]\n");
+            return 1;
+        }
+
         if (strncmp(options[0], argv[1], strlen(options[0])) != 0) {
             printf("unknown option: %s\n", argv[1]);
             printf("usage: ml4 [--derivation]\n");
@@ -48,19 +55,12 @@ int main(int argc, char *argv[]) {
                 Value *value = evaluate(parsed_exp);
                 if (value == NULL) {
                     printf("evaluation failed\n");
-                    free_exp(parsed_exp);
-                    parsed_exp = NULL;
-                    printf("# ");
-                    continue;
+                    break;
                 }
 
-                if (!fprint_value(stdout, value)) {
-                    free_value(value);
-                    free_exp(parsed_exp);
-                    return 0;
-                }
-
+                fprint_value(stdout, value);
                 printf("\n");
+
                 free_value(value);
                 break;
             }
@@ -68,13 +68,12 @@ int main(int argc, char *argv[]) {
                 Derivation *derivation = derive(parsed_exp);
                 if (derivation == NULL) {
                     printf("derivation failed\n");
-                    free_exp(parsed_exp);
-                    parsed_exp = NULL;
-                    printf("# ");
-                    continue;
+                    break;
                 }
 
                 fprint_derivation(stdout, derivation);
+                printf("\n");
+
                 free_derivation(derivation);
                 break;
             }
@@ -82,6 +81,7 @@ int main(int argc, char *argv[]) {
                 break;
             }
         }
+
         free_exp(parsed_exp);
         parsed_exp = NULL;
         printf("# ");
