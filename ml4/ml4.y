@@ -11,15 +11,19 @@ extern int yylex();
 extern int yyerror(const char*);
 
 Exp *parsed_exp;
+
+Def *parsed_def;
 %}
 %union {
     Var *var;
     Exp *exp;
+    Def *def;
 }
 %token <var> VAR
 %token <exp> INT BOOL
 %token PLUS MINUS TIMES LT IF THEN ELSE LET EQ IN FUN TO REC NIL CONS MATCH WITH OR LP RP END_OF_EXP END_OF_FILE
 %type <exp> exp exp_lt exp_cons exp_plus exp_times exp_app exp_primary
+%type <def> def
 %%
 line
     : exp END_OF_EXP {
@@ -27,6 +31,25 @@ line
             free_exp(parsed_exp);
         }
         parsed_exp = $1;
+
+        if (parsed_def != NULL) {
+            free_def(parsed_def);
+        }
+        parsed_def = NULL;
+
+        return 0;
+    }
+    | def {
+        if (parsed_exp != NULL) {
+            free_exp(parsed_exp);
+        }
+        parsed_exp = NULL;
+
+        if (parsed_def != NULL) {
+            free_def(parsed_def);
+        }
+        parsed_def = $1;
+
         return 0;
     }
     | END_OF_FILE {
@@ -34,7 +57,21 @@ line
             free_exp(parsed_exp);
         }
         parsed_exp = NULL;
+
+        if (parsed_def != NULL) {
+            free_def(parsed_def);
+        }
+        parsed_def = NULL;
+
         return 0;
+    }
+    ;
+def
+    : LET VAR EQ exp END_OF_EXP {
+        $$ = create_let_def($2, $4);
+    }
+    | LET REC VAR EQ FUN VAR TO exp END_OF_EXP {
+        $$ = create_let_rec_def($3, $6, $8);
     }
     ;
 exp

@@ -71,7 +71,7 @@ Value *create_bool_value(const bool bool_value) {
     return value;
 }
 
-Closure *create_closure(const Env *env, const Var *var, Exp *exp) {
+Closure *create_closure(const Env *env, const Var *var, const Exp *exp) {
     if (env == NULL || var == NULL || exp == NULL) {
         return NULL;
     }
@@ -79,7 +79,7 @@ Closure *create_closure(const Env *env, const Var *var, Exp *exp) {
     Closure *closure = malloc(sizeof(Closure));
     closure->env = create_copied_env(env);
     closure->var = create_copied_var(var);
-    closure->exp = exp;
+    closure->exp = create_copied_exp(exp);
     return closure;
 }
 
@@ -98,7 +98,7 @@ bool copy_closure(Closure *closure_dst, const Closure *closure_src) {
 
     closure_dst->env = create_copied_env(closure_src->env);
     closure_dst->var = create_copied_var(closure_src->var);
-    closure_dst->exp = closure_src->exp;
+    closure_dst->exp = create_copied_exp(closure_src->exp);
     return true;
 }
 
@@ -120,10 +120,14 @@ void free_closure(Closure *closure) {
 
     free_env(closure->env);
     free_var(closure->var);
+//    free_exp(closure->exp); // FIXME コメントを外すと導出の結果がおかしい（やたら解放してる）
     free(closure);
 }
 
-RecClosure *create_rec_closure(const Env *env, const Var *var_rec, const Var *var, Exp *exp) {
+RecClosure *create_rec_closure(const Env *env,
+                               const Var *var_rec,
+                               const Var *var,
+                               const Exp *exp) {
     if (env == NULL || var_rec == NULL || var == NULL || exp == NULL) {
         return NULL;
     }
@@ -132,7 +136,7 @@ RecClosure *create_rec_closure(const Env *env, const Var *var_rec, const Var *va
     rec_closure->env = create_copied_env(env);
     rec_closure->var_rec = create_copied_var(var_rec);
     rec_closure->var = create_copied_var(var);
-    rec_closure->exp = exp;
+    rec_closure->exp = create_copied_exp(exp);
     return rec_closure;
 }
 
@@ -157,7 +161,7 @@ bool copy_rec_closure(RecClosure *rec_closure_dst, const RecClosure *rec_closure
     rec_closure_dst->env = create_copied_env(rec_closure_src->env);
     rec_closure_dst->var_rec = create_copied_var(rec_closure_src->var_rec);
     rec_closure_dst->var = create_copied_var(rec_closure_src->var);
-    rec_closure_dst->exp = rec_closure_src->exp;
+    rec_closure_dst->exp = create_copied_exp(rec_closure_src->exp);
     return true;
 }
 
@@ -180,6 +184,7 @@ void free_rec_closure(RecClosure *rec_closure) {
     free_env(rec_closure->env);
     free_var(rec_closure->var_rec);
     free_var(rec_closure->var);
+//    free_exp(rec_closure->exp); // FIXME コメントを外すと導出の結果がおかしい（やたら解放してる）
     free(rec_closure);
 }
 
@@ -662,6 +667,259 @@ Exp *create_match_exp(Exp *exp_list,
     exp->match_exp = match_exp;
 
     return exp;
+}
+
+Exp *create_copied_exp(const Exp *exp) {
+    if (exp == NULL) {
+        return NULL;
+    }
+
+    switch (exp->type) {
+        case INT_EXP: {
+            if (exp->int_exp == NULL) {
+                return NULL;
+            }
+
+            return create_int_exp(exp->int_exp->int_value);
+        }
+        case BOOL_EXP: {
+            if (exp->bool_exp == NULL) {
+                return NULL;
+            }
+
+            return create_bool_exp(exp->bool_exp->bool_value);
+        }
+        case VAR_EXP: {
+            if (exp->var_exp == NULL) {
+                return NULL;
+            }
+
+            return create_var_exp(create_copied_var(exp->var_exp->var));
+        }
+        case OP_EXP: {
+            if (exp->op_exp == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_left = create_copied_exp(exp->op_exp->exp_left);
+            if (exp_left == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_right = create_copied_exp(exp->op_exp->exp_right);
+            if (exp_right == NULL) {
+                free_exp(exp_left);
+                return NULL;
+            }
+
+            switch (exp->op_exp->type) {
+                case PLUS_OP_EXP: {
+                    return create_plus_op_exp(exp_left, exp_right);
+                }
+                case MINUS_OP_EXP: {
+                    return create_minus_op_exp(exp_left, exp_right);
+                }
+                case TIMES_OP_EXP: {
+                    return create_times_op_exp(exp_left, exp_right);
+                }
+                case LT_OP_EXP: {
+                    return create_lt_op_exp(exp_left, exp_right);
+                }
+                default: {
+                    free_exp(exp_right);
+                    free_exp(exp_left);
+                    return NULL;
+                }
+            }
+        }
+        case IF_EXP: {
+            if (exp->if_exp == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_cond = create_copied_exp(exp->if_exp->exp_cond);
+            if (exp_cond == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_true = create_copied_exp(exp->if_exp->exp_true);
+            if (exp_true == NULL) {
+                free_exp(exp_cond);
+                return NULL;
+            }
+
+            Exp *exp_false = create_copied_exp(exp->if_exp->exp_false);
+            if (exp_false == NULL) {
+                free_exp(exp_true);
+                free_exp(exp_cond);
+                return NULL;
+            }
+
+            return create_if_exp(exp_cond, exp_true, exp_false);
+        }
+        case LET_EXP: {
+            if (exp->let_exp == NULL) {
+                return NULL;
+            }
+
+            Var *var = create_copied_var(exp->let_exp->var);
+            if (var == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_1 = create_copied_exp(exp->let_exp->exp_1);
+            if (exp_1 == NULL) {
+                free_var(var);
+                return NULL;
+            }
+
+            Exp *exp_2 = create_copied_exp(exp->let_exp->exp_2);
+            if (exp_2 == NULL) {
+                free_exp(exp_1);
+                free_var(var);
+                return NULL;
+            }
+
+            return create_let_exp(var, exp_1, exp_2);
+        }
+        case FUN_EXP: {
+            if (exp->fun_exp == NULL) {
+                return NULL;
+            }
+
+            Var *var = create_copied_var(exp->fun_exp->var);
+            if (var == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_body = create_copied_exp(exp->fun_exp->exp);
+            if (exp_body == NULL) {
+                free_var(var);
+                return NULL;
+            }
+
+            return create_fun_exp(var, exp_body);
+        }
+        case APP_EXP: {
+            if (exp->app_exp == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_1 = create_copied_exp(exp->app_exp->exp_1);
+            if (exp_1 == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_2 = create_copied_exp(exp->app_exp->exp_2);
+            if (exp_2 == NULL) {
+                free_exp(exp_1);
+                return NULL;
+            }
+
+            return create_app_exp(exp_1, exp_2);
+        }
+        case LET_REC_EXP: {
+            if (exp->let_rec_exp == NULL) {
+                return NULL;
+            }
+
+            Var *var_rec = create_copied_var(exp->let_rec_exp->var_rec);
+            if (var_rec == NULL) {
+                return NULL;
+            }
+
+            Var *var = create_copied_var(exp->let_rec_exp->var);
+            if (var == NULL) {
+                free_var(var_rec);
+                return NULL;
+            }
+
+            Exp *exp_1 = create_copied_exp(exp->let_rec_exp->exp_1);
+            if (exp_1 == NULL) {
+                free_var(var);
+                free_var(var_rec);
+                return NULL;
+            }
+
+            Exp *exp_2 = create_copied_exp(exp->let_rec_exp->exp_2);
+            if (exp_2 == NULL) {
+                free_exp(exp_1);
+                free_var(var);
+                free_var(var_rec);
+                return NULL;
+            }
+        }
+        case NIL_EXP: {
+            return create_nil_exp();
+        }
+        case CONS_EXP: {
+            if (exp->cons_exp == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_elem = create_copied_exp(exp->cons_exp->exp_elem);
+            if (exp_elem == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_list = create_copied_exp(exp->cons_exp->exp_list);
+            if (exp_list == NULL) {
+                free_exp(exp_elem);
+                return NULL;
+            }
+
+            return create_cons_exp(exp_elem, exp_list);
+        }
+        case MATCH_EXP: {
+            if (exp->match_exp == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_list = create_copied_exp(exp->match_exp->exp_list);
+            if (exp_list == NULL) {
+                return NULL;
+            }
+
+            Exp *exp_match_nil = create_copied_exp(exp->match_exp->exp_match_nil);
+            if (exp_match_nil == NULL) {
+                free_exp(exp_list);
+                return NULL;
+            }
+
+            Var *var_elem = create_copied_var(exp->match_exp->var_elem);
+            if (var_elem == NULL) {
+                free_exp(exp_match_nil);
+                free_exp(exp_list);
+                return NULL;
+            }
+
+            Var *var_list = create_copied_var(exp->match_exp->var_list);
+            if (var_list == NULL) {
+                free_var(var_elem);
+                free_exp(exp_match_nil);
+                free_exp(exp_list);
+                return NULL;
+            }
+
+            Exp *exp_match_cons = create_copied_exp(exp->match_exp->exp_match_cons);
+            if (exp_match_cons == NULL) {
+                free_var(var_list);
+                free_var(var_elem);
+                free_exp(exp_match_nil);
+                free_exp(exp_list);
+                return NULL;
+            }
+
+            return create_match_exp(exp_list,
+                                    exp_match_nil,
+                                    var_elem,
+                                    var_list,
+                                    exp_match_cons);
+        }
+        default: {
+            return NULL;
+        }
+    }
 }
 
 void free_exp(Exp *exp) {
@@ -1331,6 +1589,128 @@ Value *evaluate_impl(const Env *env, const Exp *exp) {
         }
         default: {
             return NULL;
+        }
+    }
+}
+
+Def *create_let_def(Var *var, Exp *exp_1) {
+    if (var == NULL || exp_1 == NULL) {
+        return NULL;
+    }
+
+    LetDef *let_def = malloc(sizeof(LetDef));
+    let_def->var = var;
+    let_def->exp_1 = exp_1;
+
+    Def *def = malloc(sizeof(Def));
+    def->type = LET_DEF;
+    def->let_def = let_def;
+    return def;
+}
+
+Def *create_let_rec_def(Var *var_rec, Var *var, Exp *exp_1) {
+    if (var_rec == NULL || var == NULL || exp_1 == NULL) {
+        return NULL;
+    }
+
+    LetRecDef *let_rec_def = malloc(sizeof(LetRecDef));
+    let_rec_def->var_rec = var_rec;
+    let_rec_def->var = var;
+    let_rec_def->exp_1 = exp_1;
+
+    Def *def = malloc(sizeof(Def));
+    def->type = LET_REC_DEF;
+    def->let_rec_def = let_rec_def;
+    return def;
+}
+
+void free_def(Def *def) {
+    if (def == NULL) {
+        return;
+    }
+
+    switch (def->type) {
+        case LET_DEF: {
+            if (def->let_def == NULL) {
+                free(def);
+                return;
+            }
+
+            free_var(def->let_def->var);
+            free_exp(def->let_def->exp_1);
+            free(def->let_def);
+            free(def);
+            break;
+        }
+        case LET_REC_DEF: {
+            if (def->let_rec_def == NULL) {
+                free(def);
+                return;
+            }
+
+            free_var(def->let_rec_def->var_rec);
+            free_var(def->let_rec_def->var);
+            free_exp(def->let_rec_def->exp_1);
+            free(def->let_rec_def);
+            free(def);
+            break;
+        }
+        default: {
+            free(def);
+            return;
+        }
+    }
+}
+
+bool add_def_to_env(Env *env, const Def *def) {
+    if (env == NULL || def == NULL) {
+        return false;
+    }
+
+    switch (def->type) {
+        case LET_DEF: {
+            if (def->let_def == NULL) {
+                return false;
+            }
+
+            Value *value_1 = evaluate_impl(env, def->let_def->exp_1);
+            if (value_1 == NULL) {
+                return false;
+            }
+
+            VarBinding *var_binding = malloc(sizeof(VarBinding));
+            var_binding->var = create_copied_var(def->let_def->var);
+            var_binding->value = value_1;
+            var_binding->next = env->var_binding;
+            env->var_binding = var_binding;
+            return true;
+        }
+        case LET_REC_DEF: {
+            if (def->let_rec_def == NULL) {
+                return false;
+            }
+
+            Value *rec_closure_value = create_rec_closure_value(
+                create_rec_closure(
+                    env,
+                    def->let_rec_def->var_rec,
+                    def->let_rec_def->var,
+                    def->let_rec_def->exp_1
+                )
+            );
+            if (rec_closure_value == NULL) {
+                return false;
+            }
+
+            VarBinding *var_binding = malloc(sizeof(VarBinding));
+            var_binding->var = create_copied_var(def->let_rec_def->var_rec);
+            var_binding->value = rec_closure_value;
+            var_binding->next = env->var_binding;
+            env->var_binding = var_binding;
+            return true;
+        }
+        default: {
+            return false;
         }
     }
 }

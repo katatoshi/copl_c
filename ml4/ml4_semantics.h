@@ -180,6 +180,30 @@ struct MatchExpTag {
     Exp *exp_match_cons;
 };
 
+typedef enum {
+    LET_DEF,
+    LET_REC_DEF
+} DefType;
+
+typedef struct {
+    Var *var;
+    Exp *exp_1;
+} LetDef;
+
+typedef struct {
+    Var *var_rec;
+    Var *var;
+    Exp *exp_1;
+} LetRecDef;
+
+typedef struct {
+    DefType type;
+    union {
+        LetDef *let_def;
+        LetRecDef *let_rec_def;
+    };
+} Def;
+
 Var *create_var(const char *src_name);
 
 Var *create_copied_var(const Var *var);
@@ -192,7 +216,7 @@ Value *create_int_value(const int int_value);
 
 Value *create_bool_value(const bool bool_value);
 
-Closure *create_closure(const Env *env, const Var *var, Exp *exp);
+Closure *create_closure(const Env *env, const Var *var, const Exp *exp);
 
 Closure *create_copied_closure(const Closure *closure);
 
@@ -202,7 +226,10 @@ void free_closure(Closure *closure);
 
 Value *create_closure_value(Closure *closure);
 
-RecClosure *create_rec_closure(const Env *env, const Var *var_rec, const Var *var, Exp *exp);
+RecClosure *create_rec_closure(const Env *env,
+                               const Var *var_rec,
+                               const Var *var,
+                               const Exp *exp);
 
 RecClosure *create_copied_rec_closure(const RecClosure *rec_closure);
 
@@ -272,9 +299,19 @@ Exp *create_match_exp(Exp *exp_list,
 
 void free_exp(Exp *exp);
 
+Exp *create_copied_exp(const Exp *exp);
+
 Value *evaluate(const Exp *exp);
 
 Value *evaluate_impl(const Env *env, const Exp *exp);
+
+Def *create_let_def(Var *var, Exp *exp_1);
+
+Def *create_let_rec_def(Var *var_rec, Var *var, Exp *exp_1);
+
+void free_def(Def *def);
+
+bool add_def_to_env(Env *env, const Def *def);
 
 bool fprint_var(FILE *fp, const Var *var);
 
