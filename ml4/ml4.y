@@ -2,9 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include "ml4_semantics.h"
 
 #define YYDEBUG 1
+
+#define STRING_LITERAL_LEN_MAX 1024
 
 extern int yylex();
 
@@ -13,15 +16,31 @@ extern int yyerror(const char*);
 Exp *parsed_exp;
 
 Def *parsed_def;
+
+char *filename;
+
+bool is_interactive;
+
+static char *string_literal;
+
+static int pos_string_literal;
+
+void start_string_literal();
+
+void add_char_to_string_literal(char);
+
+char *get_string_literal();
 %}
 %union {
     Var *var;
     Exp *exp;
     Def *def;
+    char *string_literal;
 }
 %token <var> VAR
 %token <exp> INT BOOL
-%token PLUS MINUS TIMES LT IF THEN ELSE LET EQ IN FUN TO REC NIL CONS MATCH WITH OR LP RP END_OF_EXP END_OF_FILE
+%token <string_literal> STRING_LITERAL
+%token PLUS MINUS TIMES LT IF THEN ELSE LET EQ IN FUN TO REC NIL CONS MATCH WITH OR LP RP USE STRING END_OF_EXP END_OF_FILE
 %type <exp> exp exp_lt exp_cons exp_plus exp_times exp_app exp_primary
 %type <def> def
 %%
@@ -37,6 +56,11 @@ line
         }
         parsed_def = NULL;
 
+        if (filename != NULL) {
+            free(filename);
+        }
+        filename = NULL;
+
         return 0;
     }
     | def {
@@ -50,6 +74,29 @@ line
         }
         parsed_def = $1;
 
+        if (filename != NULL) {
+            free(filename);
+        }
+        filename = NULL;
+
+        return 0;
+    }
+    | USE STRING_LITERAL END_OF_EXP {
+        if (parsed_exp != NULL) {
+            free_exp(parsed_exp);
+        }
+        parsed_exp = NULL;
+
+        if (parsed_def != NULL) {
+            free_def(parsed_def);
+        }
+        parsed_def = NULL;
+
+        if (filename != NULL) {
+            free(filename);
+        }
+        filename = $2;
+
         return 0;
     }
     | END_OF_FILE {
@@ -62,6 +109,11 @@ line
             free_def(parsed_def);
         }
         parsed_def = NULL;
+
+        if (filename != NULL) {
+            free(filename);
+        }
+        filename = NULL;
 
         return 0;
     }
@@ -235,4 +287,32 @@ extern char *yytext;
 int yyerror(const char *str) {
     fprintf(stderr, "parser error near %s\n", yytext);
     return 0;
+}
+
+void start_string_literal() {
+    if (string_literal != NULL) {
+        free(string_literal);
+    }
+    string_literal = malloc(STRING_LITERAL_LEN_MAX);
+    pos_string_literal = 0;
+}
+
+void add_char_to_string_literal(char c) {
+    if (STRING_LITERAL_LEN_MAX - 1 <= pos_string_literal) {
+        return;
+    }
+
+    string_literal[pos_string_literal] = c;
+    pos_string_literal++;
+}
+
+char *get_string_literal() {
+    if (STRING_LITERAL_LEN_MAX <= pos_string_literal) {
+        pos_string_literal = STRING_LITERAL_LEN_MAX - 1;
+    }
+
+    string_literal[pos_string_literal] = '\0';
+    char *temp = string_literal;
+    string_literal = NULL;
+    return temp;
 }
