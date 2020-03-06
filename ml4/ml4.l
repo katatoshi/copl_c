@@ -17,7 +17,7 @@ int yywrap(void) {
     return 1;
 }
 %}
-%start STRING_LITERAL_STATE
+%start COMMENT STRING_LITERAL_STATE
 %%
 <INITIAL>"+" return PLUS;
 <INITIAL>"-" return MINUS;
@@ -74,7 +74,10 @@ int yywrap(void) {
 }
 <INITIAL>[\t ] ;
 <INITIAL><<EOF>> return END_OF_FILE;
+<INITIAL>"(*" BEGIN COMMENT;
 <INITIAL>. return yytext[0];
+<COMMENT>"*)" BEGIN INITIAL;
+<COMMENT>. ;
 <STRING_LITERAL_STATE>\" {
     yylval.string_literal = get_string_literal();
     BEGIN INITIAL;
