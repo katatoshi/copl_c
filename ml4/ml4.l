@@ -60,6 +60,7 @@ int yywrap(void) {
     yylval.var = create_var(yytext);
     return VAR;
 }
+<INITIAL>"(*" BEGIN COMMENT;
 <INITIAL>\" {
     start_string_literal();
     BEGIN STRING_LITERAL_STATE;
@@ -67,15 +68,19 @@ int yywrap(void) {
 <INITIAL>"(" return LP;
 <INITIAL>")" return RP;
 <INITIAL>";;\n" return END_OF_EXP;
-<INITIAL>"\n" {
+<INITIAL>\n {
     if (is_interactive) {
         printf("  ");
     }
 }
 <INITIAL>[\t ] ;
 <INITIAL><<EOF>> return END_OF_FILE;
-<INITIAL>"(*" BEGIN COMMENT;
 <INITIAL>. return yytext[0];
+<COMMENT>\n {
+    if (is_interactive) {
+        printf("  ");
+    }
+}
 <COMMENT>"*)" BEGIN INITIAL;
 <COMMENT>. ;
 <STRING_LITERAL_STATE>\" {
